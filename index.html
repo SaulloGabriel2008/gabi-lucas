@@ -3,20 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta
-    name="description"
-    content="Landing page de casamento elegante, responsiva e preparada para receber conteúdos finais via configuração."
-  >
-  <title>Nosso Casamento</title>
+  <meta name="description" content="Site de casamento de Ana e Lucas com visual editorial, elegante e responsivo.">
+  <title>Ana & Lucas | Casamento</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="site-body">
   <header class="site-header">
     <div class="container header-shell">
       <a class="brand-mark" href="#hero" aria-label="Voltar ao topo">
-        <span id="headerMonogram">A &amp; B</span>
+        <span id="headerMonogram">A &amp; L</span>
       </a>
-      <nav class="site-nav" aria-label="Navegação principal">
+      <nav class="site-nav" aria-label="Navegacao principal">
         <a href="#historia" data-nav-key="story"></a>
         <a href="#agenda" data-nav-key="schedule"></a>
         <a href="#rsvp" data-nav-key="rsvp"></a>
@@ -27,14 +24,14 @@
   </header>
 
   <main>
-    <section id="hero" class="hero" aria-labelledby="heroTitle">
-      <div class="hero-media reveal">
+    <section id="hero" class="hero-section">
+      <div id="heroFrame" class="hero-media media-frame reveal">
         <img id="heroImage" src="" alt="">
       </div>
       <div class="hero-overlay"></div>
       <div class="container hero-content reveal">
-        <p id="heroEyebrow" class="eyebrow"></p>
-        <h1 id="heroTitle"></h1>
+        <p id="heroEyebrow" class="section-kicker hero-kicker"></p>
+        <h1 id="heroTitle" class="hero-title"></h1>
         <p id="heroSubtitle" class="hero-subtitle"></p>
         <div class="hero-actions">
           <a id="heroPrimaryCta" class="button button-primary" href="#rsvp"></a>
@@ -43,145 +40,142 @@
       </div>
     </section>
 
-    <section id="intro" class="section intro-section">
-      <div class="container intro-grid">
-        <div class="intro-copy reveal">
-          <p class="section-kicker" id="introKicker"></p>
-          <h2 id="introTitle"></h2>
-          <p id="introBody"></p>
+    <section class="section editorial-section">
+      <div class="container editorial-grid">
+        <div class="editorial-copy reveal">
+          <p id="introKicker" class="section-kicker"></p>
+          <h2 id="introTitle" class="section-title"></h2>
+          <p id="introBody" class="section-body"></p>
         </div>
-        <div class="intro-media reveal" id="introPhotos" aria-label="Fotos do casal"></div>
+        <div id="introPhotos" class="editorial-media reveal" aria-label="Fotos de Ana e Lucas"></div>
       </div>
     </section>
 
     <section id="historia" class="section story-section">
       <div class="container story-grid">
-        <div class="story-media reveal">
+        <div id="storyFrame" class="story-media media-frame reveal">
           <img id="storyImage" src="" alt="">
         </div>
         <div class="story-copy reveal">
-          <p class="section-kicker" id="storyKicker"></p>
-          <h2 id="storyTitle"></h2>
-          <p id="storyBody"></p>
-          <a id="storyButton" class="button button-secondary" href="#local"></a>
+          <p id="storyKicker" class="section-kicker"></p>
+          <h2 id="storyTitle" class="section-title"></h2>
+          <p id="storyBody" class="section-body"></p>
+          <a id="storyButton" class="button button-secondary button-solid-light" href="#local"></a>
         </div>
       </div>
     </section>
 
-    <section id="agenda" class="section schedule-section olive-surface">
+    <section id="agenda" class="section olive-section">
       <div class="container">
         <div class="section-heading reveal">
-          <p class="section-kicker" id="scheduleKicker"></p>
-          <h2 id="scheduleTitle"></h2>
-          <p id="scheduleIntro" class="section-intro"></p>
+          <p id="scheduleKicker" class="section-kicker section-kicker-light"></p>
+          <h2 id="scheduleTitle" class="section-title section-title-light"></h2>
+          <p id="scheduleIntro" class="section-body section-body-light"></p>
         </div>
-        <div id="scheduleList" class="schedule-list" aria-label="Agenda do evento"></div>
+        <div id="scheduleList" class="schedule-grid"></div>
       </div>
     </section>
 
     <section id="rsvp" class="section rsvp-section">
-      <div class="container rsvp-grid">
-        <div class="rsvp-copy reveal">
-          <p class="section-kicker" id="rsvpKicker"></p>
-          <h2 id="rsvpTitle"></h2>
-          <p id="rsvpBody"></p>
+      <div class="container split-grid">
+        <div class="panel-copy reveal">
+          <p id="rsvpKicker" class="section-kicker"></p>
+          <h2 id="rsvpTitle" class="section-title"></h2>
+          <p id="rsvpBody" class="section-body"></p>
         </div>
-        <div class="rsvp-form-shell reveal">
-          <form id="rsvpForm" class="rsvp-form" novalidate>
+        <div class="panel reveal">
+          <form id="publicRsvpForm" class="form-grid" novalidate>
             <div class="field-group">
-              <label for="guestName" id="labelGuestName"></label>
-              <input id="guestName" name="guestName" type="text" autocomplete="name" required>
+              <label id="publicNameLabel" for="publicGuestName"></label>
+              <input id="publicGuestName" name="guestName" type="text" autocomplete="name" required>
             </div>
-
-            <fieldset class="field-group attendance-group">
-              <legend id="attendanceLegend"></legend>
+            <fieldset class="field-group choice-group">
+              <legend id="publicAttendanceLegend"></legend>
               <label class="choice-pill">
                 <input type="radio" name="attendance" value="yes" required>
-                <span id="attendanceYes"></span>
+                <span id="publicAttendanceYes"></span>
               </label>
               <label class="choice-pill">
                 <input type="radio" name="attendance" value="no" required>
-                <span id="attendanceNo"></span>
+                <span id="publicAttendanceNo"></span>
               </label>
             </fieldset>
-
             <div class="field-group">
-              <label for="guestMessage" id="labelGuestMessage"></label>
-              <textarea id="guestMessage" name="guestMessage" rows="4"></textarea>
+              <label id="publicMessageLabel" for="publicGuestMessage"></label>
+              <textarea id="publicGuestMessage" name="guestMessage" rows="4"></textarea>
             </div>
-
             <div class="form-actions">
-              <button id="rsvpSubmit" class="button button-primary" type="submit"></button>
+              <button id="publicSubmitButton" type="submit" class="button button-primary"></button>
             </div>
-            <p id="rsvpFeedback" class="form-feedback" role="status" aria-live="polite"></p>
+            <p id="publicFormFeedback" class="form-feedback" role="status" aria-live="polite"></p>
           </form>
         </div>
       </div>
     </section>
 
-    <section id="presentes" class="section gifts-section">
+    <section id="presentes" class="section">
       <div class="container">
         <div class="section-heading reveal">
-          <p class="section-kicker" id="giftsKicker"></p>
-          <h2 id="giftsTitle"></h2>
-          <p id="giftsIntro" class="section-intro"></p>
+          <p id="giftsKicker" class="section-kicker"></p>
+          <h2 id="giftsTitle" class="section-title"></h2>
+          <p id="giftsIntro" class="section-body"></p>
         </div>
-        <div id="giftsList" class="gifts-list" aria-label="Lista de presentes"></div>
+        <div id="giftsList" class="gift-list"></div>
       </div>
     </section>
 
-    <section id="galeria" class="section gallery-section">
+    <section class="section gallery-section">
       <div class="container">
         <div class="section-heading reveal">
-          <p class="section-kicker" id="galleryKicker"></p>
-          <h2 id="galleryTitle"></h2>
-          <p id="galleryIntro" class="section-intro"></p>
+          <p id="galleryKicker" class="section-kicker"></p>
+          <h2 id="galleryTitle" class="section-title"></h2>
+          <p id="galleryIntro" class="section-body"></p>
         </div>
-        <div id="galleryGrid" class="gallery-grid" aria-label="Galeria de fotos"></div>
+        <div id="galleryGrid" class="gallery-grid"></div>
       </div>
     </section>
 
-    <section id="local" class="section location-section olive-surface">
-      <div class="container location-grid">
-        <div class="location-copy reveal">
-          <p class="section-kicker" id="locationKicker"></p>
-          <h2 id="locationTitle"></h2>
+    <section id="local" class="section olive-section">
+      <div class="container split-grid">
+        <div class="panel-copy reveal">
+          <p class="section-kicker section-kicker-light">Local</p>
+          <h2 class="section-title section-title-light">Um endereco pensado para acolher este dia com beleza, luz e tranquilidade.</h2>
           <p id="venueName" class="venue-name"></p>
-          <p id="venueAddress" class="venue-address"></p>
-          <a id="mapsLink" class="button button-secondary button-light" href="" target="_blank" rel="noreferrer"></a>
+          <p id="venueAddress" class="section-body section-body-light"></p>
+          <a id="mapsLink" class="button button-secondary button-light-outline" href="" target="_blank" rel="noreferrer"></a>
         </div>
-        <div class="map-placeholder reveal" aria-label="Espaço reservado para mapa">
-          <div class="map-card">
-            <p id="mapPlaceholderLabel"></p>
+        <div class="panel panel-map reveal">
+          <div class="map-placeholder">
+            <span>Espaco reservado para o mapa final do evento.</span>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="countdown" class="section countdown-section">
+    <section class="section countdown-section">
       <div class="container">
         <div class="section-heading reveal">
-          <p class="section-kicker" id="countdownKicker"></p>
-          <h2 id="countdownTitle"></h2>
-          <p id="countdownIntro" class="section-intro"></p>
+          <p id="countdownKicker" class="section-kicker"></p>
+          <h2 id="countdownTitle" class="section-title"></h2>
+          <p id="countdownIntro" class="section-body"></p>
         </div>
-        <div id="countdownShell" class="countdown-shell reveal">
-          <div class="countdown-card">
+        <div id="countdownShell" class="countdown-grid reveal">
+          <article class="countdown-card">
             <span id="daysValue" class="countdown-value">00</span>
             <span id="daysLabel" class="countdown-label"></span>
-          </div>
-          <div class="countdown-card">
+          </article>
+          <article class="countdown-card">
             <span id="hoursValue" class="countdown-value">00</span>
             <span id="hoursLabel" class="countdown-label"></span>
-          </div>
-          <div class="countdown-card">
+          </article>
+          <article class="countdown-card">
             <span id="minutesValue" class="countdown-value">00</span>
             <span id="minutesLabel" class="countdown-label"></span>
-          </div>
-          <div class="countdown-card">
+          </article>
+          <article class="countdown-card">
             <span id="secondsValue" class="countdown-value">00</span>
             <span id="secondsLabel" class="countdown-label"></span>
-          </div>
+          </article>
         </div>
         <p id="countdownFallback" class="countdown-fallback" hidden></p>
       </div>
@@ -195,6 +189,8 @@
     </div>
   </footer>
 
+  <script src="site-config.js"></script>
+  <script src="shared-ui.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

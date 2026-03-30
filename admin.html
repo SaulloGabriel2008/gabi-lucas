@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Painel administrativo dos convites personalizados de Ana e Lucas.">
+  <title>Admin | Ana & Lucas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="site-body admin-body">
+  <main class="admin-shell">
+    <section id="adminLoginSection" class="admin-auth">
+      <div class="panel panel-auth reveal">
+        <p class="section-kicker">Acesso restrito</p>
+        <h1 id="adminLoginTitle" class="section-title admin-title"></h1>
+        <p id="adminLoginBody" class="section-body"></p>
+        <form id="adminLoginForm" class="form-grid" novalidate>
+          <div class="field-group">
+            <label id="adminPasswordLabel" for="adminPassword"></label>
+            <input id="adminPassword" name="adminPassword" type="password" autocomplete="current-password" required>
+          </div>
+          <div class="form-actions">
+            <button id="adminLoginButton" type="submit" class="button button-primary"></button>
+          </div>
+          <p id="adminLoginFeedback" class="form-feedback" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
+    <section id="adminDashboardSection" class="admin-dashboard" hidden>
+      <header class="admin-header">
+        <div>
+          <p class="section-kicker">Painel do casal</p>
+          <h1 class="section-title admin-title">Convites personalizados</h1>
+          <p class="section-body">Gerencie familias, links unicos e o andamento das confirmacoes.</p>
+        </div>
+        <div class="admin-header-actions">
+          <a class="button button-secondary button-solid-light" href="index.html">Ver site principal</a>
+          <button id="adminLogoutButton" class="button button-primary" type="button">Sair</button>
+        </div>
+      </header>
+
+      <section class="stats-grid" id="adminStatsGrid"></section>
+
+      <section class="admin-grid">
+        <div class="panel">
+          <p class="section-kicker">Cadastrar familia</p>
+          <h2 class="panel-title">Novo convite</h2>
+          <form id="familyForm" class="form-grid" novalidate>
+            <input id="familyId" name="familyId" type="hidden">
+            <div class="field-group">
+              <label for="familyName">Sobrenome ou familia</label>
+              <input id="familyName" name="familyName" type="text" required>
+            </div>
+            <div class="field-group">
+              <label for="displayName">Nome exibido no convite</label>
+              <input id="displayName" name="displayName" type="text" required>
+            </div>
+            <div class="field-group">
+              <label for="customMessage">Mensagem personalizada</label>
+              <textarea id="customMessage" name="customMessage" rows="4"></textarea>
+            </div>
+            <div class="field-group">
+              <label for="reservedSeats">Quantidade de convites</label>
+              <input id="reservedSeats" name="reservedSeats" type="number" min="1" step="1" required>
+            </div>
+            <div class="field-group">
+              <label for="familySlug">Slug do link</label>
+              <div class="inline-inputs">
+                <input id="familySlug" name="familySlug" type="text" placeholder="gerado automaticamente">
+                <button id="generateSlugButton" type="button" class="button button-secondary button-solid-light">Gerar</button>
+              </div>
+            </div>
+            <label class="toggle-line">
+              <input id="isActive" name="isActive" type="checkbox" checked>
+              <span>Convite ativo</span>
+            </label>
+            <div class="form-actions">
+              <button id="familySubmitButton" type="submit" class="button button-primary">Salvar convite</button>
+              <button id="familyResetButton" type="button" class="button button-secondary button-solid-light">Limpar</button>
+            </div>
+            <p id="familyFormFeedback" class="form-feedback" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+
+        <div class="panel">
+          <p class="section-kicker">Lista de familias</p>
+          <h2 class="panel-title">Status das confirmacoes</h2>
+          <div id="familyList" class="family-list"></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-functions-compat.js"></script>
+  <script src="site-config.js"></script>
+  <script src="shared-ui.js"></script>
+  <script src="firebase-client.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

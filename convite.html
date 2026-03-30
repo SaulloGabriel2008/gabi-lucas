@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Convite personalizado do casamento de Ana e Lucas.">
+  <title>Convite | Ana & Lucas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="site-body">
+  <header class="site-header">
+    <div class="container header-shell">
+      <a class="brand-mark" href="index.html" aria-label="Ir para o site principal">
+        <span>A &amp; L</span>
+      </a>
+      <a class="button button-secondary button-solid-light" href="index.html">Voltar ao site</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero-section invite-hero">
+      <div id="inviteHeroFrame" class="hero-media media-frame reveal">
+        <img id="inviteHeroImage" src="" alt="">
+      </div>
+      <div class="hero-overlay"></div>
+      <div class="container hero-content reveal">
+        <p id="inviteEyebrow" class="section-kicker hero-kicker"></p>
+        <h1 id="inviteHeroTitle" class="hero-title"></h1>
+        <p id="inviteHeroSubtitle" class="hero-subtitle"></p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container split-grid">
+        <div class="panel-copy reveal">
+          <p class="section-kicker">Convite da familia</p>
+          <h2 id="inviteFamilyTitle" class="section-title"></h2>
+          <p id="inviteCustomMessage" class="section-body"></p>
+          <div class="invite-meta">
+            <div class="invite-meta-item">
+              <span class="invite-meta-label">Convites reservados</span>
+              <strong id="inviteReservedSeats"></strong>
+            </div>
+            <div class="invite-meta-item">
+              <span class="invite-meta-label">Status atual</span>
+              <strong id="inviteStatusText"></strong>
+            </div>
+          </div>
+        </div>
+        <div class="panel reveal">
+          <h3 id="inviteRsvpTitle" class="panel-title"></h3>
+          <p id="inviteRsvpBody" class="section-body"></p>
+          <form id="inviteRsvpForm" class="form-grid" novalidate>
+            <div class="field-group">
+              <label id="inviteSeatsLabel" for="inviteSeats"></label>
+              <input id="inviteSeats" name="confirmedSeats" type="number" min="0" step="1" required>
+            </div>
+            <div class="field-group">
+              <label id="inviteNoteLabel" for="inviteNote"></label>
+              <textarea id="inviteNote" name="attendanceNote" rows="4"></textarea>
+            </div>
+            <div class="form-actions">
+              <button id="inviteSubmitButton" type="submit" class="button button-primary"></button>
+            </div>
+            <p id="inviteFormFeedback" class="form-feedback" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="section olive-section">
+      <div class="container split-grid">
+        <div class="panel-copy reveal">
+          <p class="section-kicker section-kicker-light">Data e local</p>
+          <h2 class="section-title section-title-light">Esperamos sua familia para viver esse dia conosco.</h2>
+          <p id="inviteDateText" class="section-body section-body-light"></p>
+          <p id="inviteVenueText" class="section-body section-body-light"></p>
+          <a id="inviteMapsLink" class="button button-secondary button-light-outline" href="" target="_blank" rel="noreferrer">Abrir no Google Maps</a>
+        </div>
+        <div class="panel panel-map reveal">
+          <div class="map-placeholder map-placeholder-light">
+            <span>O mapa final e as orientacoes detalhadas podem aparecer aqui.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section countdown-section">
+      <div class="container">
+        <div class="section-heading reveal">
+          <p class="section-kicker">Contagem regressiva</p>
+          <h2 class="section-title">Falta pouco para esse encontro.</h2>
+        </div>
+        <div id="inviteCountdownShell" class="countdown-grid reveal">
+          <article class="countdown-card">
+            <span id="inviteDaysValue" class="countdown-value">00</span>
+            <span class="countdown-label">Dias</span>
+          </article>
+          <article class="countdown-card">
+            <span id="inviteHoursValue" class="countdown-value">00</span>
+            <span class="countdown-label">Horas</span>
+          </article>
+          <article class="countdown-card">
+            <span id="inviteMinutesValue" class="countdown-value">00</span>
+            <span class="countdown-label">Minutos</span>
+          </article>
+          <article class="countdown-card">
+            <span id="inviteSecondsValue" class="countdown-value">00</span>
+            <span class="countdown-label">Segundos</span>
+          </article>
+        </div>
+        <p id="inviteCountdownFallback" class="countdown-fallback" hidden></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-shell">
+      <p>Ana &amp; Lucas</p>
+      <p>Esse convite foi preparado com carinho para sua familia.</p>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-functions-compat.js"></script>
+  <script src="site-config.js"></script>
+  <script src="shared-ui.js"></script>
+  <script src="firebase-client.js"></script>
+  <script src="convite.js"></script>
+</body>
+</html>

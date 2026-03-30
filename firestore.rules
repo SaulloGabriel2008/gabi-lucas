@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    function isPublicInviteRead() {
+      return resource.data.isActive == true;
+    }
+
+    function isPublicInviteUpdate() {
+      return resource.data.isActive == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'confirmedSeats',
+          'responseStatus',
+          'attendanceNote',
+          'respondedAt',
+          'updatedAt'
+        ])
+        && request.resource.data.confirmedSeats is int
+        && request.resource.data.confirmedSeats >= 0
+        && request.resource.data.confirmedSeats <= resource.data.reservedSeats
+        && (
+          request.resource.data.responseStatus == 'confirmed'
+          || request.resource.data.responseStatus == 'cancelled'
+        )
+        && request.resource.data.slug == resource.data.slug
+        && request.resource.data.familyName == resource.data.familyName
+        && request.resource.data.displayName == resource.data.displayName
+        && request.resource.data.customMessage == resource.data.customMessage
+        && request.resource.data.reservedSeats == resource.data.reservedSeats
+        && request.resource.data.isActive == resource.data.isActive;
+    }
+
+    match /guestFamilies/{inviteId} {
+      allow get: if isAdmin() || isPublicInviteRead();
+      allow list: if isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || isPublicInviteUpdate();
+    }
+  }
+}
