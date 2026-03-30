@@ -6,8 +6,10 @@
       projectId: "multibarbeir",
       storageBucket: "multibarbeir.firebasestorage.app",
       messagingSenderId: "318079209487",
-      appId: "1:318079209487:web:79fdc7aeee4a539375537a",
-      functionsRegion: "southamerica-east1"
+      appId: "1:318079209487:web:79fdc7aeee4a539375537a"
+    },
+    adminAuth: {
+      email: "admin@anaelucas.local"
     },
     couple: {
       names: "Ana & Lucas",

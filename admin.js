@@ -278,7 +278,13 @@
         await api.loginAdmin(password);
         dom.adminLoginForm.reset();
       } catch (error) {
-        setFeedback(dom.adminLoginFeedback, "error", config.adminSite.login.errorMessage);
+        if (error && (error.code === "auth/invalid-credential" || error.code === "auth/wrong-password" || error.code === "auth/user-not-found" || error.code === "auth/invalid-login-credentials")) {
+          setFeedback(dom.adminLoginFeedback, "error", "Senha invalida ou usuario admin ainda nao foi criado no Firebase Auth.");
+        } else if (error && error.code === "auth/unauthorized-domain") {
+          setFeedback(dom.adminLoginFeedback, "error", "Este dominio ainda nao foi autorizado no Firebase Auth.");
+        } else {
+          setFeedback(dom.adminLoginFeedback, "error", config.adminSite.login.errorMessage);
+        }
       } finally {
         dom.adminLoginButton.disabled = false;
         ui.setText(dom.adminLoginButton, config.adminSite.login.submitLabel);

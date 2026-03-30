@@ -19,23 +19,15 @@
 
   var auth = firebase.auth(app);
   var db = firebase.firestore(app);
-  var functions = firebase.app().functions(config.firebase.functionsRegion);
 
   function mapFamilyDocument(documentSnapshot) {
     return Object.assign({ id: documentSnapshot.id }, documentSnapshot.data());
   }
 
   async function loginAdmin(password) {
-    var callable = functions.httpsCallable("adminLogin");
-    var response = await callable({ password: password });
-    var token = response && response.data ? response.data.token : "";
-
-    if (!token) {
-      throw new Error("Missing admin token");
-    }
-
-    await auth.signInWithCustomToken(token);
-    return auth.currentUser;
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    var credential = await auth.signInWithEmailAndPassword(config.adminAuth.email, password);
+    return credential.user;
   }
 
   function observeAuthState(callback) {
@@ -51,8 +43,7 @@
       return false;
     }
 
-    var tokenResult = await auth.currentUser.getIdTokenResult(true);
-    return Boolean(tokenResult.claims && tokenResult.claims.admin);
+    return auth.currentUser.email === config.adminAuth.email;
   }
 
   async function fetchInviteBySlug(slug) {
