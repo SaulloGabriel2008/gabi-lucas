@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="description"
+    content="Landing page de casamento elegante, responsiva e preparada para receber conteúdos finais via configuração."
+  >
+  <title>Nosso Casamento</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-shell">
+      <a class="brand-mark" href="#hero" aria-label="Voltar ao topo">
+        <span id="headerMonogram">A &amp; B</span>
+      </a>
+      <nav class="site-nav" aria-label="Navegação principal">
+        <a href="#historia" data-nav-key="story"></a>
+        <a href="#agenda" data-nav-key="schedule"></a>
+        <a href="#rsvp" data-nav-key="rsvp"></a>
+        <a href="#presentes" data-nav-key="gifts"></a>
+        <a href="#local" data-nav-key="location"></a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section id="hero" class="hero" aria-labelledby="heroTitle">
+      <div class="hero-media reveal">
+        <img id="heroImage" src="" alt="">
+      </div>
+      <div class="hero-overlay"></div>
+      <div class="container hero-content reveal">
+        <p id="heroEyebrow" class="eyebrow"></p>
+        <h1 id="heroTitle"></h1>
+        <p id="heroSubtitle" class="hero-subtitle"></p>
+        <div class="hero-actions">
+          <a id="heroPrimaryCta" class="button button-primary" href="#rsvp"></a>
+          <a id="heroSecondaryCta" class="button button-secondary" href="#local"></a>
+        </div>
+      </div>
+    </section>
+
+    <section id="intro" class="section intro-section">
+      <div class="container intro-grid">
+        <div class="intro-copy reveal">
+          <p class="section-kicker" id="introKicker"></p>
+          <h2 id="introTitle"></h2>
+          <p id="introBody"></p>
+        </div>
+        <div class="intro-media reveal" id="introPhotos" aria-label="Fotos do casal"></div>
+      </div>
+    </section>
+
+    <section id="historia" class="section story-section">
+      <div class="container story-grid">
+        <div class="story-media reveal">
+          <img id="storyImage" src="" alt="">
+        </div>
+        <div class="story-copy reveal">
+          <p class="section-kicker" id="storyKicker"></p>
+          <h2 id="storyTitle"></h2>
+          <p id="storyBody"></p>
+          <a id="storyButton" class="button button-secondary" href="#local"></a>
+        </div>
+      </div>
+    </section>
+
+    <section id="agenda" class="section schedule-section olive-surface">
+      <div class="container">
+        <div class="section-heading reveal">
+          <p class="section-kicker" id="scheduleKicker"></p>
+          <h2 id="scheduleTitle"></h2>
+          <p id="scheduleIntro" class="section-intro"></p>
+        </div>
+        <div id="scheduleList" class="schedule-list" aria-label="Agenda do evento"></div>
+      </div>
+    </section>
+
+    <section id="rsvp" class="section rsvp-section">
+      <div class="container rsvp-grid">
+        <div class="rsvp-copy reveal">
+          <p class="section-kicker" id="rsvpKicker"></p>
+          <h2 id="rsvpTitle"></h2>
+          <p id="rsvpBody"></p>
+        </div>
+        <div class="rsvp-form-shell reveal">
+          <form id="rsvpForm" class="rsvp-form" novalidate>
+            <div class="field-group">
+              <label for="guestName" id="labelGuestName"></label>
+              <input id="guestName" name="guestName" type="text" autocomplete="name" required>
+            </div>
+
+            <fieldset class="field-group attendance-group">
+              <legend id="attendanceLegend"></legend>
+              <label class="choice-pill">
+                <input type="radio" name="attendance" value="yes" required>
+                <span id="attendanceYes"></span>
+              </label>
+              <label class="choice-pill">
+                <input type="radio" name="attendance" value="no" required>
+                <span id="attendanceNo"></span>
+              </label>
+            </fieldset>
+
+            <div class="field-group">
+              <label for="guestMessage" id="labelGuestMessage"></label>
+              <textarea id="guestMessage" name="guestMessage" rows="4"></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button id="rsvpSubmit" class="button button-primary" type="submit"></button>
+            </div>
+            <p id="rsvpFeedback" class="form-feedback" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section id="presentes" class="section gifts-section">
+      <div class="container">
+        <div class="section-heading reveal">
+          <p class="section-kicker" id="giftsKicker"></p>
+          <h2 id="giftsTitle"></h2>
+          <p id="giftsIntro" class="section-intro"></p>
+        </div>
+        <div id="giftsList" class="gifts-list" aria-label="Lista de presentes"></div>
+      </div>
+    </section>
+
+    <section id="galeria" class="section gallery-section">
+      <div class="container">
+        <div class="section-heading reveal">
+          <p class="section-kicker" id="galleryKicker"></p>
+          <h2 id="galleryTitle"></h2>
+          <p id="galleryIntro" class="section-intro"></p>
+        </div>
+        <div id="galleryGrid" class="gallery-grid" aria-label="Galeria de fotos"></div>
+      </div>
+    </section>
+
+    <section id="local" class="section location-section olive-surface">
+      <div class="container location-grid">
+        <div class="location-copy reveal">
+          <p class="section-kicker" id="locationKicker"></p>
+          <h2 id="locationTitle"></h2>
+          <p id="venueName" class="venue-name"></p>
+          <p id="venueAddress" class="venue-address"></p>
+          <a id="mapsLink" class="button button-secondary button-light" href="" target="_blank" rel="noreferrer"></a>
+        </div>
+        <div class="map-placeholder reveal" aria-label="Espaço reservado para mapa">
+          <div class="map-card">
+            <p id="mapPlaceholderLabel"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="countdown" class="section countdown-section">
+      <div class="container">
+        <div class="section-heading reveal">
+          <p class="section-kicker" id="countdownKicker"></p>
+          <h2 id="countdownTitle"></h2>
+          <p id="countdownIntro" class="section-intro"></p>
+        </div>
+        <div id="countdownShell" class="countdown-shell reveal">
+          <div class="countdown-card">
+            <span id="daysValue" class="countdown-value">00</span>
+            <span id="daysLabel" class="countdown-label"></span>
+          </div>
+          <div class="countdown-card">
+            <span id="hoursValue" class="countdown-value">00</span>
+            <span id="hoursLabel" class="countdown-label"></span>
+          </div>
+          <div class="countdown-card">
+            <span id="minutesValue" class="countdown-value">00</span>
+            <span id="minutesLabel" class="countdown-label"></span>
+          </div>
+          <div class="countdown-card">
+            <span id="secondsValue" class="countdown-value">00</span>
+            <span id="secondsLabel" class="countdown-label"></span>
+          </div>
+        </div>
+        <p id="countdownFallback" class="countdown-fallback" hidden></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-shell">
+      <p id="footerSignature"></p>
+      <p id="footerMessage"></p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
