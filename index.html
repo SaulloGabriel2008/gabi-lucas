@@ -16,7 +16,6 @@
       <nav class="site-nav" aria-label="Navegacao principal">
         <a href="#historia" data-nav-key="story"></a>
         <a href="#agenda" data-nav-key="schedule"></a>
-        <a href="#rsvp" data-nav-key="rsvp"></a>
         <a href="#presentes" data-nav-key="gifts"></a>
         <a href="#local" data-nav-key="location"></a>
       </nav>
@@ -34,8 +33,8 @@
         <h1 id="heroTitle" class="hero-title"></h1>
         <p id="heroSubtitle" class="hero-subtitle"></p>
         <div class="hero-actions">
-          <a id="heroPrimaryCta" class="button button-primary" href="#rsvp"></a>
-          <a id="heroSecondaryCta" class="button button-secondary" href="#local"></a>
+          <a id="heroPrimaryCta" class="button button-primary" href="#local"></a>
+          <a id="heroSecondaryCta" class="button button-secondary" href="#agenda"></a>
         </div>
       </div>
     </section>
@@ -73,43 +72,6 @@
           <p id="scheduleIntro" class="section-body section-body-light"></p>
         </div>
         <div id="scheduleList" class="schedule-grid"></div>
-      </div>
-    </section>
-
-    <section id="rsvp" class="section rsvp-section">
-      <div class="container split-grid">
-        <div class="panel-copy reveal">
-          <p id="rsvpKicker" class="section-kicker"></p>
-          <h2 id="rsvpTitle" class="section-title"></h2>
-          <p id="rsvpBody" class="section-body"></p>
-        </div>
-        <div class="panel reveal">
-          <form id="publicRsvpForm" class="form-grid" novalidate>
-            <div class="field-group">
-              <label id="publicNameLabel" for="publicGuestName"></label>
-              <input id="publicGuestName" name="guestName" type="text" autocomplete="name" required>
-            </div>
-            <fieldset class="field-group choice-group">
-              <legend id="publicAttendanceLegend"></legend>
-              <label class="choice-pill">
-                <input type="radio" name="attendance" value="yes" required>
-                <span id="publicAttendanceYes"></span>
-              </label>
-              <label class="choice-pill">
-                <input type="radio" name="attendance" value="no" required>
-                <span id="publicAttendanceNo"></span>
-              </label>
-            </fieldset>
-            <div class="field-group">
-              <label id="publicMessageLabel" for="publicGuestMessage"></label>
-              <textarea id="publicGuestMessage" name="guestMessage" rows="4"></textarea>
-            </div>
-            <div class="form-actions">
-              <button id="publicSubmitButton" type="submit" class="button button-primary"></button>
-            </div>
-            <p id="publicFormFeedback" class="form-feedback" role="status" aria-live="polite"></p>
-          </form>
-        </div>
       </div>
     </section>
 
@@ -189,8 +151,12 @@
     </div>
   </footer>
 
+  <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore-compat.js"></script>
   <script src="site-config.js"></script>
   <script src="shared-ui.js"></script>
+  <script src="firebase-client.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

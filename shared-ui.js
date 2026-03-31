@@ -1,4 +1,41 @@
 (function () {
+  function isPlainObject(value) {
+    return Boolean(value) && Object.prototype.toString.call(value) === "[object Object]";
+  }
+
+  function cloneValue(value) {
+    if (Array.isArray(value)) {
+      return value.map(cloneValue);
+    }
+
+    if (isPlainObject(value)) {
+      return Object.keys(value).reduce(function (result, key) {
+        result[key] = cloneValue(value[key]);
+        return result;
+      }, {});
+    }
+
+    return value;
+  }
+
+  function mergeDeep(baseValue, overrideValue) {
+    if (Array.isArray(overrideValue)) {
+      return overrideValue.map(cloneValue);
+    }
+
+    if (!isPlainObject(baseValue) || !isPlainObject(overrideValue)) {
+      return overrideValue === undefined ? cloneValue(baseValue) : cloneValue(overrideValue);
+    }
+
+    const merged = cloneValue(baseValue);
+
+    Object.keys(overrideValue).forEach(function (key) {
+      merged[key] = mergeDeep(baseValue[key], overrideValue[key]);
+    });
+
+    return merged;
+  }
+
   function setText(element, value) {
     if (element) {
       element.textContent = value || "";
@@ -163,22 +200,80 @@
       return "Confirmado";
     }
 
-    if (status === "cancelled") {
-      return "Cancelado";
+    if (status === "declined" || status === "cancelled") {
+      return "Recusado";
+    }
+
+    if (status === "partial") {
+      return "Parcial";
     }
 
     return "Sem resposta";
   }
 
+  function formatMemberStatus(status) {
+    if (status === "confirmed") {
+      return "Vai";
+    }
+
+    if (status === "declined" || status === "cancelled") {
+      return "Nao vai";
+    }
+
+    return "Sem resposta";
+  }
+
+  function summarizeMembers(members) {
+    const summary = {
+      invitedCount: Array.isArray(members) ? members.length : 0,
+      confirmedCount: 0,
+      declinedCount: 0,
+      pendingCount: 0,
+      respondedCount: 0,
+      responseStatus: "pending"
+    };
+
+    (members || []).forEach(function (member) {
+      if (member && member.responseStatus === "confirmed") {
+        summary.confirmedCount += 1;
+        return;
+      }
+
+      if (member && (member.responseStatus === "declined" || member.responseStatus === "cancelled")) {
+        summary.declinedCount += 1;
+        return;
+      }
+
+      summary.pendingCount += 1;
+    });
+
+    summary.respondedCount = summary.confirmedCount + summary.declinedCount;
+
+    if (!summary.invitedCount || summary.respondedCount === 0) {
+      summary.responseStatus = "pending";
+    } else if (summary.confirmedCount === summary.invitedCount) {
+      summary.responseStatus = "confirmed";
+    } else if (summary.declinedCount === summary.invitedCount) {
+      summary.responseStatus = "declined";
+    } else {
+      summary.responseStatus = "partial";
+    }
+
+    return summary;
+  }
+
   window.WeddingUI = {
     setText: setText,
     createElement: createElement,
+    mergeDeep: mergeDeep,
     applyMediaPresentation: applyMediaPresentation,
     setupSmoothScroll: setupSmoothScroll,
     setupRevealAnimations: setupRevealAnimations,
     startCountdown: startCountdown,
     slugify: slugify,
     generateReadableInviteId: generateReadableInviteId,
-    formatInviteStatus: formatInviteStatus
+    formatInviteStatus: formatInviteStatus,
+    formatMemberStatus: formatMemberStatus,
+    summarizeMembers: summarizeMembers
   };
 })();

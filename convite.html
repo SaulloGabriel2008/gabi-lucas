@@ -38,7 +38,7 @@
           <p id="inviteCustomMessage" class="section-body"></p>
           <div class="invite-meta">
             <div class="invite-meta-item">
-              <span class="invite-meta-label">Convites reservados</span>
+              <span class="invite-meta-label">Convidados</span>
               <strong id="inviteReservedSeats"></strong>
             </div>
             <div class="invite-meta-item">
@@ -47,14 +47,12 @@
             </div>
           </div>
         </div>
+
         <div class="panel reveal">
           <h3 id="inviteRsvpTitle" class="panel-title"></h3>
           <p id="inviteRsvpBody" class="section-body"></p>
           <form id="inviteRsvpForm" class="form-grid" novalidate>
-            <div class="field-group">
-              <label id="inviteSeatsLabel" for="inviteSeats"></label>
-              <input id="inviteSeats" name="confirmedSeats" type="number" min="0" step="1" required>
-            </div>
+            <div id="inviteGuestList" class="invite-guest-list"></div>
             <div class="field-group">
               <label id="inviteNoteLabel" for="inviteNote"></label>
               <textarea id="inviteNote" name="attendanceNote" rows="4"></textarea>
@@ -79,7 +77,7 @@
         </div>
         <div class="panel panel-map reveal">
           <div class="map-placeholder map-placeholder-light">
-            <span>O mapa final e as orientacoes detalhadas podem aparecer aqui.</span>
+            <span>Consulte o endereco e o mapa para planejar sua chegada com tranquilidade.</span>
           </div>
         </div>
       </div>
@@ -113,6 +111,18 @@
       </div>
     </section>
   </main>
+
+  <div id="inviteSuccessModal" class="modal-backdrop" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="inviteSuccessTitle">
+      <button id="inviteSuccessClose" type="button" class="modal-close" aria-label="Fechar popup">x</button>
+      <p class="section-kicker">Resposta registrada</p>
+      <h2 id="inviteSuccessTitle" class="panel-title">Obrigada por confirmar sua resposta.</h2>
+      <p class="section-body">Se quiser, voce pode continuar navegando pelo site principal para ver mais detalhes da celebracao.</p>
+      <div class="form-actions">
+        <a id="inviteSuccessLink" class="button button-primary" href="index.html">Ir para a landing page</a>
+      </div>
+    </div>
+  </div>
 
   <footer class="site-footer">
     <div class="container footer-shell">
