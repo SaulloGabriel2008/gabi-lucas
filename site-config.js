@@ -9,7 +9,7 @@
       appId: "1:318079209487:web:79fdc7aeee4a539375537a"
     },
     adminAuth: {
-      email: "admin@anaelucas.local"
+      password: "AnaLucas2026!"
     },
     couple: {
       names: "Ana & Lucas",

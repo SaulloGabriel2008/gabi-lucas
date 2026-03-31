@@ -116,24 +116,12 @@
       return defaultConfig.adminSite.login.errorMessage;
     }
 
-    if (error.code === "auth/admin-email-missing") {
-      return "O email do admin nao foi configurado corretamente no site.";
+    if (error.code === "auth/admin-password-missing") {
+      return "A senha do admin nao foi configurada corretamente no codigo do site.";
     }
 
-    if (error.code === "auth/user-not-found") {
-      return "O usuario admin ainda nao foi criado no Firebase Auth.";
-    }
-
-    if (error.code === "auth/wrong-password" || error.code === "auth/invalid-credential" || error.code === "auth/invalid-login-credentials") {
+    if (error.code === "auth/wrong-password") {
       return "A senha informada esta incorreta.";
-    }
-
-    if (error.code === "auth/unauthorized-domain") {
-      return "Este dominio ainda nao foi autorizado no Firebase Auth.";
-    }
-
-    if (error.code === "auth/operation-not-allowed") {
-      return "O login por Email/Senha ainda nao foi habilitado no Firebase Auth.";
     }
 
     return defaultConfig.adminSite.login.errorMessage;
