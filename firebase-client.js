@@ -25,8 +25,16 @@
   }
 
   async function loginAdmin(password) {
+    var adminEmail = config.adminAuth && config.adminAuth.email;
+
+    if (!adminEmail) {
+      var missingEmailError = new Error("Admin email is not configured.");
+      missingEmailError.code = "auth/admin-email-missing";
+      throw missingEmailError;
+    }
+
     await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    var credential = await auth.signInWithEmailAndPassword(config.adminAuth.email, password);
+    var credential = await auth.signInWithEmailAndPassword(adminEmail, password);
     return credential.user;
   }
 

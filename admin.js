@@ -46,6 +46,34 @@
     }
   }
 
+  function getAdminLoginErrorMessage(error) {
+    if (!error || !error.code) {
+      return config.adminSite.login.errorMessage;
+    }
+
+    if (error.code === "auth/admin-email-missing") {
+      return "O email do admin nao foi configurado corretamente no site.";
+    }
+
+    if (error.code === "auth/user-not-found") {
+      return "O usuario admin ainda nao foi criado no Firebase Auth.";
+    }
+
+    if (error.code === "auth/wrong-password" || error.code === "auth/invalid-credential" || error.code === "auth/invalid-login-credentials") {
+      return "A senha informada esta incorreta.";
+    }
+
+    if (error.code === "auth/unauthorized-domain") {
+      return "Este dominio ainda nao foi autorizado no Firebase Auth.";
+    }
+
+    if (error.code === "auth/operation-not-allowed") {
+      return "O login por Email/Senha ainda nao foi habilitado no Firebase Auth.";
+    }
+
+    return config.adminSite.login.errorMessage;
+  }
+
   function resetFamilyForm() {
     dom.familyForm.reset();
     dom.familyId.value = "";
@@ -278,13 +306,7 @@
         await api.loginAdmin(password);
         dom.adminLoginForm.reset();
       } catch (error) {
-        if (error && (error.code === "auth/invalid-credential" || error.code === "auth/wrong-password" || error.code === "auth/user-not-found" || error.code === "auth/invalid-login-credentials")) {
-          setFeedback(dom.adminLoginFeedback, "error", "Senha invalida ou usuario admin ainda nao foi criado no Firebase Auth.");
-        } else if (error && error.code === "auth/unauthorized-domain") {
-          setFeedback(dom.adminLoginFeedback, "error", "Este dominio ainda nao foi autorizado no Firebase Auth.");
-        } else {
-          setFeedback(dom.adminLoginFeedback, "error", config.adminSite.login.errorMessage);
-        }
+        setFeedback(dom.adminLoginFeedback, "error", getAdminLoginErrorMessage(error));
       } finally {
         dom.adminLoginButton.disabled = false;
         ui.setText(dom.adminLoginButton, config.adminSite.login.submitLabel);
