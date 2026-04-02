@@ -79,6 +79,7 @@
   var state = {
     authReady: false,
     subscriptionsStarted: false,
+    pendingUser: null,
     families: [],
     gifts: [],
     tables: [],
@@ -902,18 +903,11 @@
     renderAdminState();
   }
 
-  async function syncAdminState(user) {
-    state.authReady = true;
-
-    if (!user) {
-      stopSubscriptions();
-      showLoggedOutState();
-      return;
-    }
-
+  async function bootAuthenticatedAdmin(user) {
     var isAdmin = await api.currentUserIsAdmin(user);
 
     if (!isAdmin) {
+      state.pendingUser = null;
       try {
         await api.logoutAdmin();
       } catch (error) {
@@ -928,9 +922,26 @@
       return;
     }
 
+    state.pendingUser = user;
     showLoggedInState();
     await loadRemoteSiteSettings();
     startSubscriptions();
+  }
+
+  async function syncAdminState(user) {
+    state.authReady = true;
+
+    if (!user) {
+      if (state.pendingUser) {
+        return;
+      }
+
+      stopSubscriptions();
+      showLoggedOutState();
+      return;
+    }
+
+    await bootAuthenticatedAdmin(user);
   }
 
   function setupLoginForm() {
@@ -950,9 +961,12 @@
 
       try {
         var credential = await api.loginAdmin(email, password);
+        state.pendingUser = credential.user;
+        setFeedback(dom.adminLoginFeedback, "success", "Acesso confirmado. Carregando painel...");
         dom.adminPassword.value = "";
-        await syncAdminState(credential.user);
+        await bootAuthenticatedAdmin(credential.user);
       } catch (error) {
+        state.pendingUser = null;
         setFeedback(dom.adminLoginFeedback, "error", getAdminLoginErrorMessage(error));
       } finally {
         setLoginBusy(false);
@@ -960,6 +974,7 @@
     });
 
     dom.adminLogoutButton.addEventListener("click", async function () {
+      state.pendingUser = null;
       try {
         await api.logoutAdmin();
       } catch (error) {
