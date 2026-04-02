@@ -81,7 +81,22 @@
     }
 
     await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    return auth.signInWithEmailAndPassword(normalizedEmail, password);
+    var credential = await auth.signInWithEmailAndPassword(normalizedEmail, password);
+
+    if (!credential || !credential.user) {
+      var missingUserError = new Error("Admin user could not be resolved.");
+      missingUserError.code = "auth/user-not-found";
+      throw missingUserError;
+    }
+
+    if (String(credential.user.email || "").trim().toLowerCase() !== adminEmail) {
+      await auth.signOut();
+      var blockedUserError = new Error("Admin email is not allowed.");
+      blockedUserError.code = "auth/admin-email-not-allowed";
+      throw blockedUserError;
+    }
+
+    return credential;
   }
 
   function observeAuthState(callback) {
@@ -92,14 +107,15 @@
     await auth.signOut();
   }
 
-  async function currentUserIsAdmin() {
+  async function currentUserIsAdmin(user) {
     var adminEmail = String(config.adminAuth && config.adminAuth.email || "").trim().toLowerCase();
+    var currentUser = user || auth.currentUser;
 
-    if (!auth.currentUser || !adminEmail) {
+    if (!currentUser || !adminEmail) {
       return false;
     }
 
-    return String(auth.currentUser.email || "").trim().toLowerCase() === adminEmail;
+    return String(currentUser.email || "").trim().toLowerCase() === adminEmail;
   }
 
   async function loadFamilyMembers(familyId) {

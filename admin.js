@@ -143,7 +143,7 @@
     }
 
     if (error.code === "auth/admin-email-not-allowed") {
-      return "Apenas o email administrativo pode acessar este painel.";
+      return "Apenas o email administrativo " + getAdminEmail() + " pode acessar este painel.";
     }
 
     if (error.code === "auth/invalid-email") {
@@ -911,7 +911,7 @@
       return;
     }
 
-    var isAdmin = await api.currentUserIsAdmin();
+    var isAdmin = await api.currentUserIsAdmin(user);
 
     if (!isAdmin) {
       try {
@@ -949,8 +949,9 @@
       setLoginBusy(true);
 
       try {
-        await api.loginAdmin(email, password);
+        var credential = await api.loginAdmin(email, password);
         dom.adminPassword.value = "";
+        await syncAdminState(credential.user);
       } catch (error) {
         setFeedback(dom.adminLoginFeedback, "error", getAdminLoginErrorMessage(error));
       } finally {
