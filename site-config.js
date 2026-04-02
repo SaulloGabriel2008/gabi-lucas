@@ -9,7 +9,7 @@
       appId: "1:318079209487:web:79fdc7aeee4a539375537a"
     },
     adminAuth: {
-      password: "AnaLucas2026!"
+      email: "admin@anaelucas.local"
     },
     couple: {
       names: "Ana & Lucas",
@@ -263,11 +263,12 @@
       subtitle: "Gerencie familias convidadas, links personalizados e o status das confirmacoes.",
       login: {
         title: "Acesso do admin",
-        body: "Somente Ana e Lucas devem acessar essa area com a senha compartilhada.",
-        passwordLabel: "Senha unica",
+        body: "Entre com o email administrativo e a senha cadastrada no Firebase Auth.",
+        emailLabel: "Email do admin",
+        passwordLabel: "Senha",
         submitLabel: "Entrar no painel",
         loadingLabel: "Entrando...",
-        errorMessage: "Nao foi possivel validar a senha."
+        errorMessage: "Nao foi possivel validar o acesso ao painel."
       }
     }
   };

@@ -8,6 +8,8 @@
     adminDashboardSection: document.querySelector("#adminDashboardSection"),
     adminLoginTitle: document.querySelector("#adminLoginTitle"),
     adminLoginBody: document.querySelector("#adminLoginBody"),
+    adminEmailLabel: document.querySelector("#adminEmailLabel"),
+    adminEmail: document.querySelector("#adminEmail"),
     adminPasswordLabel: document.querySelector("#adminPasswordLabel"),
     adminLoginForm: document.querySelector("#adminLoginForm"),
     adminPassword: document.querySelector("#adminPassword"),
@@ -116,12 +118,40 @@
       return defaultConfig.adminSite.login.errorMessage;
     }
 
-    if (error.code === "auth/admin-password-missing") {
-      return "A senha do admin nao foi configurada corretamente no codigo do site.";
+    if (error.code === "auth/admin-email-missing") {
+      return "O email do admin nao foi configurado corretamente no projeto.";
     }
 
-    if (error.code === "auth/wrong-password") {
+    if (error.code === "auth/invalid-email") {
+      return "Informe um email valido para continuar.";
+    }
+
+    if (error.code === "auth/user-not-found") {
+      return "O usuario admin ainda nao foi criado no Firebase Auth.";
+    }
+
+    if (
+      error.code === "auth/wrong-password"
+      || error.code === "auth/invalid-credential"
+      || error.code === "auth/invalid-login-credentials"
+    ) {
       return "A senha informada esta incorreta.";
+    }
+
+    if (error.code === "auth/operation-not-allowed") {
+      return "O login por Email/Senha ainda nao foi habilitado no Firebase Auth.";
+    }
+
+    if (error.code === "auth/unauthorized-domain") {
+      return "Este dominio ainda nao foi autorizado no Firebase Auth.";
+    }
+
+    if (error.code === "auth/network-request-failed") {
+      return "Nao foi possivel conectar ao Firebase agora. Verifique sua internet e tente novamente.";
+    }
+
+    if (error.code === "auth/too-many-requests") {
+      return "Muitas tentativas de acesso. Aguarde um instante e tente novamente.";
     }
 
     return defaultConfig.adminSite.login.errorMessage;
@@ -131,8 +161,10 @@
     document.title = "Admin | " + defaultConfig.couple.names;
     ui.setText(dom.adminLoginTitle, defaultConfig.adminSite.login.title);
     ui.setText(dom.adminLoginBody, defaultConfig.adminSite.login.body);
+    ui.setText(dom.adminEmailLabel, defaultConfig.adminSite.login.emailLabel || "Email");
     ui.setText(dom.adminPasswordLabel, defaultConfig.adminSite.login.passwordLabel);
     ui.setText(dom.adminLoginButton, defaultConfig.adminSite.login.submitLabel);
+    dom.adminEmail.value = String(defaultConfig.adminAuth && defaultConfig.adminAuth.email || "");
   }
 
   function buildInviteUrl(slug) {
@@ -821,24 +853,30 @@
   function setupLogin() {
     dom.adminLoginForm.addEventListener("submit", async function (event) {
       event.preventDefault();
+      var email = String(dom.adminEmail.value || "").trim();
       var password = String(dom.adminPassword.value || "");
 
-      if (!password) {
-        setFeedback(dom.adminLoginFeedback, "error", "Informe a senha para continuar.");
+      if (!email || !password) {
+        setFeedback(dom.adminLoginFeedback, "error", "Informe email e senha para continuar.");
         return;
       }
 
       ui.setText(dom.adminLoginButton, defaultConfig.adminSite.login.loadingLabel);
       dom.adminLoginButton.disabled = true;
+      dom.adminEmail.disabled = true;
+      dom.adminPassword.disabled = true;
       setFeedback(dom.adminLoginFeedback, "", "");
 
       try {
-        await api.loginAdmin(password);
+        await api.loginAdmin(email, password);
         dom.adminLoginForm.reset();
+        dom.adminEmail.value = String(defaultConfig.adminAuth && defaultConfig.adminAuth.email || "");
       } catch (error) {
         setFeedback(dom.adminLoginFeedback, "error", getAdminLoginErrorMessage(error));
       } finally {
         dom.adminLoginButton.disabled = false;
+        dom.adminEmail.disabled = false;
+        dom.adminPassword.disabled = false;
         ui.setText(dom.adminLoginButton, defaultConfig.adminSite.login.submitLabel);
       }
     });
@@ -1097,9 +1135,12 @@
     var isAdmin = await api.currentUserIsAdmin();
 
     if (!isAdmin) {
+      await api.logoutAdmin();
       dom.adminLoginSection.hidden = false;
       dom.adminDashboardSection.hidden = true;
       stopSubscriptions();
+      dom.adminPassword.value = "";
+      dom.adminEmail.value = String(defaultConfig.adminAuth && defaultConfig.adminAuth.email || "");
       setFeedback(dom.adminLoginFeedback, "error", "Esta conta nao possui permissao administrativa.");
       return;
     }
@@ -1120,6 +1161,10 @@
     if (!api) {
       setFeedback(dom.adminLoginFeedback, "error", "Firebase nao foi carregado corretamente para o painel.");
       return;
+    }
+
+    if (typeof api.clearLegacyAdminSession === "function") {
+      api.clearLegacyAdminSession();
     }
 
     hydrateLoginCopy();

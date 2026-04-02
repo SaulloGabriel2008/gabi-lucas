@@ -17,8 +17,8 @@
         appId: config.firebase.appId
       });
 
+  var auth = firebase.auth(app);
   var db = firebase.firestore(app);
-  var adminSessionKey = "wedding-admin-session";
 
   var guestFamiliesCollection = db.collection("guestFamilies");
   var tablesCollection = db.collection("tables");
@@ -60,63 +60,40 @@
     return "pending";
   }
 
-  function hasAdminSession() {
-    return window.localStorage.getItem(adminSessionKey) === "true";
+  function clearLegacyAdminSession() {
+    window.localStorage.removeItem("wedding-admin-session");
   }
 
-  function notifyAuthState() {
-    window.dispatchEvent(new CustomEvent("wedding-admin-auth-changed", {
-      detail: { isAdmin: hasAdminSession() }
-    }));
-  }
+  async function loginAdmin(email, password) {
+    var adminEmail = String(config.adminAuth && config.adminAuth.email || "").trim().toLowerCase();
+    var normalizedEmail = String(email || "").trim().toLowerCase();
 
-  async function loginAdmin(password) {
-    var adminPassword = config.adminAuth && config.adminAuth.password;
-
-    if (!adminPassword) {
-      var missingPasswordError = new Error("Admin password is not configured.");
-      missingPasswordError.code = "auth/admin-password-missing";
-      throw missingPasswordError;
+    if (!adminEmail) {
+      var missingEmailError = new Error("Admin email is not configured.");
+      missingEmailError.code = "auth/admin-email-missing";
+      throw missingEmailError;
     }
 
-    if (String(password || "") !== String(adminPassword)) {
-      var wrongPasswordError = new Error("Invalid password.");
-      wrongPasswordError.code = "auth/wrong-password";
-      throw wrongPasswordError;
-    }
-
-    window.localStorage.setItem(adminSessionKey, "true");
-    notifyAuthState();
-    return { isAdmin: true };
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    return auth.signInWithEmailAndPassword(normalizedEmail, password);
   }
 
   function observeAuthState(callback) {
-    function emitState() {
-      callback(hasAdminSession() ? { isAdmin: true } : null);
-    }
-
-    emitState();
-
-    function handleStateChange() {
-      emitState();
-    }
-
-    window.addEventListener("wedding-admin-auth-changed", handleStateChange);
-    window.addEventListener("storage", handleStateChange);
-
-    return function unsubscribe() {
-      window.removeEventListener("wedding-admin-auth-changed", handleStateChange);
-      window.removeEventListener("storage", handleStateChange);
-    };
+    return auth.onAuthStateChanged(callback);
   }
 
   async function logoutAdmin() {
-    window.localStorage.removeItem(adminSessionKey);
-    notifyAuthState();
+    await auth.signOut();
   }
 
   async function currentUserIsAdmin() {
-    return hasAdminSession();
+    var adminEmail = String(config.adminAuth && config.adminAuth.email || "").trim().toLowerCase();
+
+    if (!auth.currentUser || !adminEmail) {
+      return false;
+    }
+
+    return String(auth.currentUser.email || "").trim().toLowerCase() === adminEmail;
   }
 
   async function loadFamilyMembers(familyId) {
@@ -425,8 +402,9 @@
   }
 
   window.WeddingFirebase = {
-    auth: null,
+    auth: auth,
     db: db,
+    clearLegacyAdminSession: clearLegacyAdminSession,
     loginAdmin: loginAdmin,
     logoutAdmin: logoutAdmin,
     observeAuthState: observeAuthState,
