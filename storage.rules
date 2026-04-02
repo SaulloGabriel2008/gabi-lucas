@@ -1,0 +1,23 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function adminPath(uid) {
+      return /databases/(default)/documents/admins/$(uid);
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && firestore.exists(adminPath(request.auth.uid))
+        && firestore.get(adminPath(request.auth.uid)).data.active == true;
+    }
+
+    match /gift-images/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

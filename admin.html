@@ -17,7 +17,7 @@
         <form id="adminLoginForm" class="form-grid" novalidate>
           <div class="field-group">
             <label id="adminEmailLabel" for="adminEmail"></label>
-            <input id="adminEmail" name="adminEmail" type="email" autocomplete="username" readonly required>
+            <input id="adminEmail" name="adminEmail" type="email" autocomplete="username" required>
           </div>
           <div class="field-group">
             <label id="adminPasswordLabel" for="adminPassword"></label>
@@ -282,9 +282,7 @@
   <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore-compat.js"></script>
-  <script src="site-config.js"></script>
-  <script src="shared-ui.js"></script>
-  <script src="firebase-client.js"></script>
-  <script src="admin.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-storage-compat.js"></script>
+  <script type="module" src="js/pages/admin-page.mjs"></script>
 </body>
 </html>

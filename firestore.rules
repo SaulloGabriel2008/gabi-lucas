@@ -1,12 +1,33 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isAdmin() {
-      return request.auth != null && request.auth.token.email == "admin@anaelucas.local";
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    function isActiveFamily(inviteId) {
-      return get(/databases/$(database)/documents/guestFamilies/$(inviteId)).data.isActive == true;
+    function adminPath(uid) {
+      return /databases/$(database)/documents/admins/$(uid);
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(adminPath(request.auth.uid))
+        && get(adminPath(request.auth.uid)).data.active == true;
+    }
+
+    function familyPath(familyId) {
+      return /databases/$(database)/documents/families/$(familyId);
+    }
+
+    function familyIsActive(familyId) {
+      return exists(familyPath(familyId))
+        && get(familyPath(familyId)).data.isActive == true;
+    }
+
+    match /admins/{userId} {
+      allow get: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /siteSettings/{settingId} {
@@ -15,8 +36,8 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
-    match /giftItems/{giftId} {
-      allow get, list: if true;
+    match /gifts/{giftId} {
+      allow read: if isAdmin() || resource.data.isActive == true;
       allow create, update, delete: if isAdmin();
     }
 
@@ -24,7 +45,13 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
-    match /guestFamilies/{inviteId} {
+    match /inviteLinks/{slug} {
+      allow get: if isAdmin() || resource.data.isActive == true;
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /families/{familyId} {
       allow get: if isAdmin() || resource.data.isActive == true;
       allow list: if isAdmin();
       allow create, delete: if isAdmin();
@@ -34,28 +61,20 @@ service cloud.firestore {
           'attendanceNote',
           'updatedAt'
         ])
-        && request.resource.data.slug == resource.data.slug
-        && request.resource.data.familyName == resource.data.familyName
-        && request.resource.data.displayName == resource.data.displayName
-        && request.resource.data.customMessage == resource.data.customMessage
-        && request.resource.data.isActive == resource.data.isActive
-        && request.resource.data.createdAt == resource.data.createdAt
       );
 
-      match /members/{memberId} {
-        allow get, list: if isAdmin() || isActiveFamily(inviteId);
+      match /guests/{guestId} {
+        allow get, list: if isAdmin() || familyIsActive(familyId);
         allow create, delete: if isAdmin();
         allow update: if isAdmin() || (
-          isActiveFamily(inviteId)
+          familyIsActive(familyId)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'responseStatus',
             'updatedAt'
           ])
-          && request.resource.data.name == resource.data.name
-          && request.resource.data.tableId == resource.data.tableId
-          && request.resource.data.createdAt == resource.data.createdAt
           && (
-            request.resource.data.responseStatus == 'confirmed'
+            request.resource.data.responseStatus == 'pending'
+            || request.resource.data.responseStatus == 'confirmed'
             || request.resource.data.responseStatus == 'declined'
           )
         );
