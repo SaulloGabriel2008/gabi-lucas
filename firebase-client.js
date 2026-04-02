@@ -74,6 +74,12 @@
       throw missingEmailError;
     }
 
+    if (normalizedEmail !== adminEmail) {
+      var unauthorizedEmailError = new Error("Admin email is not allowed.");
+      unauthorizedEmailError.code = "auth/admin-email-not-allowed";
+      throw unauthorizedEmailError;
+    }
+
     await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     return auth.signInWithEmailAndPassword(normalizedEmail, password);
   }

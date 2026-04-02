@@ -76,15 +76,18 @@
     seatAssignmentFeedback: document.querySelector("#seatAssignmentFeedback")
   };
 
-  var familiesCache = [];
-  var giftsCache = [];
-  var tablesCache = [];
-  var mergedSiteConfig = buildMergedSiteConfig();
-  var currentGiftImageDataUrl = "";
-  var unsubscribeFamilies = null;
-  var unsubscribeGiftItems = null;
-  var unsubscribeTables = null;
-  var subscriptionsStarted = false;
+  var state = {
+    authReady: false,
+    subscriptionsStarted: false,
+    families: [],
+    gifts: [],
+    tables: [],
+    mergedSiteConfig: buildMergedSiteConfig(),
+    currentGiftImageDataUrl: "",
+    unsubscribeFamilies: null,
+    unsubscribeGifts: null,
+    unsubscribeTables: null
+  };
 
   function buildMergedSiteConfig(override) {
     var merged = ui.mergeDeep(defaultConfig, override || {});
@@ -100,7 +103,15 @@
     return merged;
   }
 
+  function getAdminEmail() {
+    return String(defaultConfig.adminAuth && defaultConfig.adminAuth.email || "").trim();
+  }
+
   function setFeedback(element, type, message) {
+    if (!element) {
+      return;
+    }
+
     element.textContent = message || "";
     element.classList.remove("is-success", "is-error");
 
@@ -113,6 +124,15 @@
     }
   }
 
+  function setLoginBusy(isBusy) {
+    dom.adminLoginButton.disabled = isBusy;
+    dom.adminEmail.disabled = isBusy;
+    dom.adminPassword.disabled = isBusy;
+    ui.setText(dom.adminLoginButton, isBusy
+      ? defaultConfig.adminSite.login.loadingLabel
+      : defaultConfig.adminSite.login.submitLabel);
+  }
+
   function getAdminLoginErrorMessage(error) {
     if (!error || !error.code) {
       return defaultConfig.adminSite.login.errorMessage;
@@ -120,6 +140,10 @@
 
     if (error.code === "auth/admin-email-missing") {
       return "O email do admin nao foi configurado corretamente no projeto.";
+    }
+
+    if (error.code === "auth/admin-email-not-allowed") {
+      return "Apenas o email administrativo pode acessar este painel.";
     }
 
     if (error.code === "auth/invalid-email") {
@@ -164,7 +188,18 @@
     ui.setText(dom.adminEmailLabel, defaultConfig.adminSite.login.emailLabel || "Email");
     ui.setText(dom.adminPasswordLabel, defaultConfig.adminSite.login.passwordLabel);
     ui.setText(dom.adminLoginButton, defaultConfig.adminSite.login.submitLabel);
-    dom.adminEmail.value = String(defaultConfig.adminAuth && defaultConfig.adminAuth.email || "");
+    dom.adminEmail.value = getAdminEmail();
+  }
+
+  function showLoggedOutState() {
+    dom.adminLoginSection.hidden = false;
+    dom.adminDashboardSection.hidden = true;
+  }
+
+  function showLoggedInState() {
+    dom.adminLoginSection.hidden = true;
+    dom.adminDashboardSection.hidden = false;
+    setFeedback(dom.adminLoginFeedback, "", "");
   }
 
   function buildInviteUrl(slug) {
@@ -180,7 +215,7 @@
       return "Sem mesa";
     }
 
-    var table = tablesCache.find(function (item) {
+    var table = state.tables.find(function (item) {
       return item.id === tableId;
     });
 
@@ -194,17 +229,16 @@
   }
 
   function updateMemberEditorHint() {
-    var items = dom.memberEditorList.querySelectorAll(".member-editor-item");
-    var total = items.length;
+    var total = dom.memberEditorList.querySelectorAll(".member-editor-item").length;
     ui.setText(dom.memberEditorHint, total
       ? total + " nome" + (total > 1 ? "s cadastrados." : " cadastrado.")
       : "Adicione uma linha para cada pessoa convidada. A quantidade total sera calculada automaticamente.");
   }
 
   function updateMemberEditorMeta(item) {
+    var meta = item.querySelector(".member-editor-meta");
     var statusValue = item.querySelector(".member-status-input").value;
     var tableValue = item.querySelector(".member-table-input").value;
-    var meta = item.querySelector(".member-editor-meta");
     meta.textContent = "Status: " + ui.formatMemberStatus(statusValue) + " | Mesa: " + resolveTableName(tableValue);
   }
 
@@ -226,13 +260,13 @@
     hiddenTable.value = member && member.tableId ? member.tableId : "";
 
     var nameGroup = ui.createElement("div", "field-group");
-    var label = ui.createElement("label", "", "Nome do convidado");
-    var input = ui.createElement("input");
-    input.type = "text";
-    input.className = "member-name-input";
-    input.value = member && member.name ? member.name : "";
-    input.required = true;
-    nameGroup.append(label, input);
+    var nameLabel = ui.createElement("label", "", "Nome do convidado");
+    var nameInput = ui.createElement("input");
+    nameInput.type = "text";
+    nameInput.className = "member-name-input";
+    nameInput.required = true;
+    nameInput.value = member && member.name ? member.name : "";
+    nameGroup.append(nameLabel, nameInput);
 
     var meta = ui.createElement("p", "member-editor-meta");
     var removeButton = ui.createElement("button", "button button-secondary button-solid-light button-small", "Remover");
@@ -248,17 +282,6 @@
     updateMemberEditorHint();
   }
 
-  function resetFamilyForm() {
-    dom.familyForm.reset();
-    dom.familyId.value = "";
-    dom.familySlug.value = "";
-    dom.isActive.checked = true;
-    dom.memberEditorList.innerHTML = "";
-    createMemberEditorItem();
-    setFeedback(dom.familyFormFeedback, "", "");
-    ui.setText(dom.familySubmitButton, "Salvar convite");
-  }
-
   function collectMembersFromEditor() {
     return Array.from(dom.memberEditorList.querySelectorAll(".member-editor-item")).map(function (item) {
       return {
@@ -272,13 +295,24 @@
     });
   }
 
+  function resetFamilyForm() {
+    dom.familyForm.reset();
+    dom.familyId.value = "";
+    dom.familySlug.value = "";
+    dom.isActive.checked = true;
+    dom.memberEditorList.innerHTML = "";
+    createMemberEditorItem();
+    ui.setText(dom.familySubmitButton, "Salvar convite");
+    setFeedback(dom.familyFormFeedback, "", "");
+  }
+
   function populateFamilyForm(family) {
     dom.familyId.value = family.id;
     dom.familyName.value = family.familyName || "";
     dom.displayName.value = family.displayName || "";
     dom.customMessage.value = family.customMessage || "";
     dom.familySlug.value = family.slug || family.id;
-    dom.isActive.checked = Boolean(family.isActive);
+    dom.isActive.checked = family.isActive !== false;
     dom.memberEditorList.innerHTML = "";
 
     (family.members || []).forEach(function (member) {
@@ -294,9 +328,9 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function renderStats(families) {
+  function renderStats() {
     var totals = {
-      familiesInvited: families.length,
+      familiesInvited: state.families.length,
       familiesResponded: 0,
       peopleInvited: 0,
       peopleConfirmed: 0,
@@ -304,7 +338,7 @@
       peoplePending: 0
     };
 
-    families.forEach(function (family) {
+    state.families.forEach(function (family) {
       var summary = summarizeFamily(family);
       totals.peopleInvited += summary.invitedCount;
       totals.peopleConfirmed += summary.confirmedCount;
@@ -316,7 +350,7 @@
       }
     });
 
-    var stats = [
+    var items = [
       { label: "Familias convidadas", value: totals.familiesInvited },
       { label: "Familias com resposta", value: totals.familiesResponded },
       { label: "Pessoas convidadas", value: totals.peopleInvited },
@@ -327,7 +361,7 @@
 
     dom.adminStatsGrid.innerHTML = "";
 
-    stats.forEach(function (item) {
+    items.forEach(function (item) {
       var card = ui.createElement("article", "stat-card");
       card.append(
         ui.createElement("span", "stat-label", item.label),
@@ -337,24 +371,23 @@
     });
   }
 
-  function renderFamilies(families) {
+  function renderFamilies() {
     dom.familyList.innerHTML = "";
 
-    if (!families.length) {
+    if (!state.families.length) {
       dom.familyList.appendChild(createEmptyState("Nenhuma familia cadastrada ainda."));
       return;
     }
 
-    families.forEach(function (family) {
+    state.families.forEach(function (family) {
       var summary = summarizeFamily(family);
       var card = ui.createElement("article", "family-card");
       var header = ui.createElement("div", "family-card-header");
       var headerText = ui.createElement("div", "");
       var title = ui.createElement("h3", "family-card-title", family.familyName || family.displayName || "Familia sem nome");
       var subtitle = ui.createElement("p", "section-body compact-body", family.displayName || "");
-      headerText.append(title, subtitle);
-
       var badge = ui.createElement("span", "status-badge status-" + summary.responseStatus, ui.formatInviteStatus(summary.responseStatus));
+      headerText.append(title, subtitle);
       header.append(headerText, badge);
 
       var stats = ui.createElement("div", "family-stats");
@@ -372,7 +405,6 @@
       });
 
       var membersList = ui.createElement("div", "member-status-list");
-
       (family.members || []).forEach(function (member) {
         var chip = ui.createElement("div", "member-status-chip");
         chip.append(
@@ -393,9 +425,7 @@
       );
 
       if (family.attendanceNote) {
-        var note = ui.createElement("p", "section-body compact-body");
-        note.textContent = "Observacao enviada: " + family.attendanceNote;
-        linkRow.appendChild(note);
+        linkRow.appendChild(ui.createElement("p", "section-body compact-body", "Observacao enviada: " + family.attendanceNote));
       }
 
       var actions = ui.createElement("div", "form-actions");
@@ -416,18 +446,14 @@
         }
       });
 
-      var toggleButton = ui.createElement(
-        "button",
-        "button button-secondary button-solid-light",
-        family.isActive ? "Desativar" : "Ativar"
-      );
+      var toggleButton = ui.createElement("button", "button button-secondary button-solid-light", family.isActive ? "Desativar" : "Ativar");
       toggleButton.type = "button";
       toggleButton.addEventListener("click", async function () {
         try {
           await api.toggleGuestFamily(family.id, !family.isActive);
           setFeedback(dom.familyFormFeedback, "success", "Status do convite atualizado.");
         } catch (error) {
-          setFeedback(dom.familyFormFeedback, "error", "Nao foi possivel alterar o status desse convite.");
+          setFeedback(dom.familyFormFeedback, "error", "Nao foi possivel alterar este convite.");
         }
       });
 
@@ -438,9 +464,9 @@
   }
 
   function renderGiftPreview(dataUrl) {
-    currentGiftImageDataUrl = dataUrl || "";
-    dom.giftImagePreviewShell.hidden = !currentGiftImageDataUrl;
-    dom.giftImagePreview.src = currentGiftImageDataUrl || "";
+    state.currentGiftImageDataUrl = dataUrl || "";
+    dom.giftImagePreviewShell.hidden = !state.currentGiftImageDataUrl;
+    dom.giftImagePreview.src = state.currentGiftImageDataUrl || "";
   }
 
   function resetGiftForm() {
@@ -449,8 +475,8 @@
     dom.giftSortOrder.value = "";
     dom.giftIsActive.checked = true;
     renderGiftPreview("");
-    setFeedback(dom.giftFormFeedback, "", "");
     ui.setText(dom.giftSubmitButton, "Salvar presente");
+    setFeedback(dom.giftFormFeedback, "", "");
   }
 
   function populateGiftForm(gift) {
@@ -460,20 +486,20 @@
     dom.giftPurchaseUrl.value = gift.purchaseUrl || "";
     dom.giftIsActive.checked = gift.isActive !== false;
     renderGiftPreview(gift.imageDataUrl || "");
-    setFeedback(dom.giftFormFeedback, "", "");
     ui.setText(dom.giftSubmitButton, "Atualizar presente");
+    setFeedback(dom.giftFormFeedback, "", "");
     window.scrollTo({ top: document.body.scrollHeight * 0.55, behavior: "smooth" });
   }
 
-  function renderGiftList(gifts) {
+  function renderGiftList() {
     dom.giftList.innerHTML = "";
 
-    if (!gifts.length) {
+    if (!state.gifts.length) {
       dom.giftList.appendChild(createEmptyState("Nenhum presente cadastrado ainda."));
       return;
     }
 
-    gifts.forEach(function (gift) {
+    state.gifts.forEach(function (gift) {
       var card = ui.createElement("article", "gift-admin-card");
 
       if (gift.imageDataUrl) {
@@ -484,9 +510,13 @@
       }
 
       var body = ui.createElement("div", "gift-admin-body");
-      var title = ui.createElement("h3", "panel-title", gift.name);
+      var title = ui.createElement("h3", "panel-title", gift.name || "Presente sem nome");
       var meta = ui.createElement("p", "section-body compact-body", gift.purchaseUrl || "Sem link cadastrado.");
-      var badge = ui.createElement("span", "status-badge status-" + (gift.isActive !== false ? "confirmed" : "pending"), gift.isActive !== false ? "Visivel" : "Oculto");
+      var badge = ui.createElement(
+        "span",
+        "status-badge status-" + (gift.isActive !== false ? "confirmed" : "pending"),
+        gift.isActive !== false ? "Visivel" : "Oculto"
+      );
       body.append(title, meta, badge);
 
       var actions = ui.createElement("div", "form-actions");
@@ -502,15 +532,15 @@
         try {
           await api.saveGiftItem({
             id: gift.id,
+            sortOrder: gift.sortOrder,
             name: gift.name,
             purchaseUrl: gift.purchaseUrl,
             imageDataUrl: gift.imageDataUrl,
-            isActive: gift.isActive === false,
-            sortOrder: gift.sortOrder
+            isActive: gift.isActive === false
           });
           setFeedback(dom.giftFormFeedback, "success", "Visibilidade do presente atualizada.");
         } catch (error) {
-          setFeedback(dom.giftFormFeedback, "error", "Nao foi possivel atualizar este presente.");
+          setFeedback(dom.giftFormFeedback, "error", "Nao foi possivel alterar a visibilidade deste presente.");
         }
       });
 
@@ -539,8 +569,8 @@
     dom.tableForm.reset();
     dom.tableId.value = "";
     dom.tableSortOrder.value = "";
-    setFeedback(dom.tableFormFeedback, "", "");
     ui.setText(dom.tableSubmitButton, "Salvar mesa");
+    setFeedback(dom.tableFormFeedback, "", "");
   }
 
   function populateTableForm(table) {
@@ -549,22 +579,22 @@
     dom.tableName.value = table.name || "";
     dom.tableCapacity.value = String(table.capacity || "");
     dom.tableNotes.value = table.notes || "";
-    setFeedback(dom.tableFormFeedback, "", "");
     ui.setText(dom.tableSubmitButton, "Atualizar mesa");
+    setFeedback(dom.tableFormFeedback, "", "");
     window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
   }
 
   function collectConfirmedGuests() {
     var guests = [];
 
-    familiesCache.forEach(function (family) {
+    state.families.forEach(function (family) {
       (family.members || []).forEach(function (member) {
         if (member.responseStatus === "confirmed") {
           guests.push({
             familyId: family.id,
             familyName: family.displayName || family.familyName || "",
             memberId: member.id,
-            memberName: member.name,
+            memberName: member.name || "",
             tableId: member.tableId || ""
           });
         }
@@ -573,7 +603,9 @@
 
     return guests.sort(function (left, right) {
       var familyCompare = String(left.familyName || "").localeCompare(String(right.familyName || ""));
-      return familyCompare !== 0 ? familyCompare : String(left.memberName || "").localeCompare(String(right.memberName || ""));
+      return familyCompare !== 0
+        ? familyCompare
+        : String(left.memberName || "").localeCompare(String(right.memberName || ""));
     });
   }
 
@@ -581,21 +613,24 @@
     dom.tablesBoard.innerHTML = "";
     var confirmedGuests = collectConfirmedGuests();
 
-    if (!tablesCache.length) {
+    if (!state.tables.length) {
       dom.tablesBoard.appendChild(createEmptyState("Cadastre as mesas para visualizar o mapa e a ocupacao."));
       return;
     }
 
-    tablesCache.forEach(function (table) {
+    state.tables.forEach(function (table) {
       var assignedGuests = confirmedGuests.filter(function (guest) {
         return guest.tableId === table.id;
       });
-      var card = ui.createElement("article", "table-card" + (assignedGuests.length > Number(table.capacity || 0) ? " is-over-capacity" : ""));
+      var capacity = Number(table.capacity || 0);
+      var card = ui.createElement("article", "table-card" + (assignedGuests.length > capacity ? " is-over-capacity" : ""));
       var header = ui.createElement("div", "table-card-header");
       header.append(
-        ui.createElement("h3", "panel-title", table.name),
-        ui.createElement("span", "occupancy-badge", assignedGuests.length + "/" + Number(table.capacity || 0))
+        ui.createElement("h3", "panel-title", table.name || "Mesa"),
+        ui.createElement("span", "occupancy-badge", assignedGuests.length + "/" + capacity)
       );
+
+      card.appendChild(header);
 
       if (table.notes) {
         card.appendChild(ui.createElement("p", "section-body compact-body", table.notes));
@@ -604,7 +639,7 @@
       var list = ui.createElement("div", "table-members-list");
       if (assignedGuests.length) {
         assignedGuests.forEach(function (guest) {
-          list.appendChild(ui.createElement("div", "table-member-pill", guest.memberName + " • " + guest.familyName));
+          list.appendChild(ui.createElement("div", "table-member-pill", guest.memberName + " | " + guest.familyName));
         });
       } else {
         list.appendChild(ui.createElement("p", "section-body compact-body", "Nenhum convidado confirmado nesta mesa ainda."));
@@ -633,7 +668,7 @@
       });
 
       actions.append(editButton, deleteButton);
-      card.append(header, list, actions);
+      card.append(list, actions);
       dom.tablesBoard.appendChild(card);
     });
 
@@ -647,10 +682,12 @@
         ui.createElement("h3", "panel-title", "Confirmados sem mesa"),
         ui.createElement("span", "occupancy-badge", String(unassignedGuests.length))
       );
+
       var pendingList = ui.createElement("div", "table-members-list");
       unassignedGuests.forEach(function (guest) {
-        pendingList.appendChild(ui.createElement("div", "table-member-pill", guest.memberName + " • " + guest.familyName));
+        pendingList.appendChild(ui.createElement("div", "table-member-pill", guest.memberName + " | " + guest.familyName));
       });
+
       pendingCard.appendChild(pendingList);
       dom.tablesBoard.appendChild(pendingCard);
     }
@@ -678,7 +715,7 @@
       emptyOption.value = "";
       select.appendChild(emptyOption);
 
-      tablesCache.forEach(function (table) {
+      state.tables.forEach(function (table) {
         var option = ui.createElement("option", "", table.name);
         option.value = table.id;
         option.selected = table.id === guest.tableId;
@@ -706,17 +743,19 @@
   }
 
   function renderAdminState() {
-    renderStats(familiesCache);
-    renderFamilies(familiesCache);
+    renderStats();
+    renderFamilies();
+    renderGiftList();
     renderTablesBoard();
     renderSeatAssignmentList();
   }
 
   function populateSiteSettingsForm() {
-    var intro = mergedSiteConfig.publicSite && mergedSiteConfig.publicSite.intro ? mergedSiteConfig.publicSite.intro : {};
-    var story = mergedSiteConfig.publicSite && mergedSiteConfig.publicSite.story ? mergedSiteConfig.publicSite.story : {};
-    var event = mergedSiteConfig.event || {};
-    var couple = mergedSiteConfig.couple || {};
+    var config = state.mergedSiteConfig;
+    var intro = config.publicSite && config.publicSite.intro ? config.publicSite.intro : {};
+    var story = config.publicSite && config.publicSite.story ? config.publicSite.story : {};
+    var event = config.event || {};
+    var couple = config.couple || {};
 
     dom.settingsDateText.value = couple.dateText || "";
     dom.settingsDateTime.value = toDateTimeLocalValue(couple.dateTime || "");
@@ -731,7 +770,7 @@
     dom.settingsStoryKicker.value = story.kicker || "";
     dom.settingsStoryTitle.value = story.title || "";
     dom.settingsStoryBody.value = story.body || "";
-    dom.settingsShowGifts.checked = mergedSiteConfig.features.showGifts !== false;
+    dom.settingsShowGifts.checked = config.features.showGifts !== false;
   }
 
   function toDateTimeLocalValue(value) {
@@ -798,51 +837,41 @@
     });
   }
 
-  async function loadSiteSettings() {
+  async function loadRemoteSiteSettings() {
     try {
       var remoteSettings = await api.loadSiteSettings();
-      mergedSiteConfig = buildMergedSiteConfig(remoteSettings || {});
+      state.mergedSiteConfig = buildMergedSiteConfig(remoteSettings || {});
     } catch (error) {
-      mergedSiteConfig = buildMergedSiteConfig();
+      state.mergedSiteConfig = buildMergedSiteConfig();
       setFeedback(dom.siteSettingsFeedback, "error", "Nao foi possivel carregar as informacoes salvas do site. O formulario exibira os valores padrao.");
     }
 
     populateSiteSettingsForm();
   }
 
-  function subscribeFamilies() {
-    if (unsubscribeFamilies) {
-      unsubscribeFamilies();
+  function startSubscriptions() {
+    if (state.subscriptionsStarted) {
+      return;
     }
 
-    unsubscribeFamilies = api.subscribeGuestFamilies(function (families) {
-      familiesCache = families;
+    state.subscriptionsStarted = true;
+
+    state.unsubscribeFamilies = api.subscribeGuestFamilies(function (families) {
+      state.families = families;
       renderAdminState();
     }, function () {
       setFeedback(dom.familyFormFeedback, "error", "Nao foi possivel carregar a lista de familias.");
     });
-  }
 
-  function subscribeGifts() {
-    if (unsubscribeGiftItems) {
-      unsubscribeGiftItems();
-    }
-
-    unsubscribeGiftItems = api.subscribeGiftItems(function (giftItems) {
-      giftsCache = giftItems;
-      renderGiftList(giftsCache);
+    state.unsubscribeGifts = api.subscribeGiftItems(function (gifts) {
+      state.gifts = gifts;
+      renderGiftList();
     }, function () {
       setFeedback(dom.giftFormFeedback, "error", "Nao foi possivel carregar a lista de presentes.");
     });
-  }
 
-  function subscribeTables() {
-    if (unsubscribeTables) {
-      unsubscribeTables();
-    }
-
-    unsubscribeTables = api.subscribeTables(function (tables) {
-      tablesCache = tables;
+    state.unsubscribeTables = api.subscribeTables(function (tables) {
+      state.tables = tables;
       renderAdminState();
       Array.from(dom.memberEditorList.querySelectorAll(".member-editor-item")).forEach(updateMemberEditorMeta);
     }, function () {
@@ -850,9 +879,64 @@
     });
   }
 
-  function setupLogin() {
+  function stopSubscriptions() {
+    if (state.unsubscribeFamilies) {
+      state.unsubscribeFamilies();
+      state.unsubscribeFamilies = null;
+    }
+
+    if (state.unsubscribeGifts) {
+      state.unsubscribeGifts();
+      state.unsubscribeGifts = null;
+    }
+
+    if (state.unsubscribeTables) {
+      state.unsubscribeTables();
+      state.unsubscribeTables = null;
+    }
+
+    state.subscriptionsStarted = false;
+    state.families = [];
+    state.gifts = [];
+    state.tables = [];
+    renderAdminState();
+  }
+
+  async function syncAdminState(user) {
+    state.authReady = true;
+
+    if (!user) {
+      stopSubscriptions();
+      showLoggedOutState();
+      return;
+    }
+
+    var isAdmin = await api.currentUserIsAdmin();
+
+    if (!isAdmin) {
+      try {
+        await api.logoutAdmin();
+      } catch (error) {
+        // Ignore logout cleanup failure here.
+      }
+
+      stopSubscriptions();
+      showLoggedOutState();
+      dom.adminPassword.value = "";
+      dom.adminEmail.value = getAdminEmail();
+      setFeedback(dom.adminLoginFeedback, "error", "Esta conta nao possui permissao administrativa.");
+      return;
+    }
+
+    showLoggedInState();
+    await loadRemoteSiteSettings();
+    startSubscriptions();
+  }
+
+  function setupLoginForm() {
     dom.adminLoginForm.addEventListener("submit", async function (event) {
       event.preventDefault();
+
       var email = String(dom.adminEmail.value || "").trim();
       var password = String(dom.adminPassword.value || "");
 
@@ -861,28 +945,25 @@
         return;
       }
 
-      ui.setText(dom.adminLoginButton, defaultConfig.adminSite.login.loadingLabel);
-      dom.adminLoginButton.disabled = true;
-      dom.adminEmail.disabled = true;
-      dom.adminPassword.disabled = true;
       setFeedback(dom.adminLoginFeedback, "", "");
+      setLoginBusy(true);
 
       try {
         await api.loginAdmin(email, password);
-        dom.adminLoginForm.reset();
-        dom.adminEmail.value = String(defaultConfig.adminAuth && defaultConfig.adminAuth.email || "");
+        dom.adminPassword.value = "";
       } catch (error) {
         setFeedback(dom.adminLoginFeedback, "error", getAdminLoginErrorMessage(error));
       } finally {
-        dom.adminLoginButton.disabled = false;
-        dom.adminEmail.disabled = false;
-        dom.adminPassword.disabled = false;
-        ui.setText(dom.adminLoginButton, defaultConfig.adminSite.login.submitLabel);
+        setLoginBusy(false);
       }
     });
 
     dom.adminLogoutButton.addEventListener("click", async function () {
-      await api.logoutAdmin();
+      try {
+        await api.logoutAdmin();
+      } catch (error) {
+        setFeedback(dom.adminLoginFeedback, "error", "Nao foi possivel encerrar a sessao agora.");
+      }
     });
   }
 
@@ -906,7 +987,7 @@
       var displayName = String(dom.displayName.value || "").trim();
       var slug = String(dom.familySlug.value || "").trim() || ui.generateReadableInviteId(familyName || displayName);
       var members = collectMembersFromEditor();
-      var existingFamily = familiesCache.find(function (family) {
+      var existingFamily = state.families.find(function (family) {
         return family.id === dom.familyId.value;
       });
 
@@ -920,8 +1001,8 @@
         return;
       }
 
-      ui.setText(dom.familySubmitButton, "Salvando...");
       dom.familySubmitButton.disabled = true;
+      ui.setText(dom.familySubmitButton, "Salvando...");
       setFeedback(dom.familyFormFeedback, "", "");
 
       try {
@@ -987,13 +1068,13 @@
         return;
       }
 
-      ui.setText(dom.siteSettingsSubmitButton, "Salvando...");
       dom.siteSettingsSubmitButton.disabled = true;
+      ui.setText(dom.siteSettingsSubmitButton, "Salvando...");
       setFeedback(dom.siteSettingsFeedback, "", "");
 
       try {
         await api.saveSiteSettings(payload);
-        mergedSiteConfig = buildMergedSiteConfig(payload);
+        state.mergedSiteConfig = buildMergedSiteConfig(payload);
         setFeedback(dom.siteSettingsFeedback, "success", "Informacoes do site atualizadas.");
       } catch (error) {
         setFeedback(dom.siteSettingsFeedback, "error", "Nao foi possivel salvar as informacoes do site.");
@@ -1017,8 +1098,7 @@
       }
 
       try {
-        var imageDataUrl = await compressImageFile(file);
-        renderGiftPreview(imageDataUrl);
+        renderGiftPreview(await compressImageFile(file));
       } catch (error) {
         setFeedback(dom.giftFormFeedback, "error", "Nao foi possivel processar essa imagem.");
       }
@@ -1035,13 +1115,13 @@
         return;
       }
 
-      if (!currentGiftImageDataUrl) {
+      if (!state.currentGiftImageDataUrl) {
         setFeedback(dom.giftFormFeedback, "error", "Adicione uma foto para o presente.");
         return;
       }
 
-      ui.setText(dom.giftSubmitButton, "Salvando...");
       dom.giftSubmitButton.disabled = true;
+      ui.setText(dom.giftSubmitButton, "Salvando...");
       setFeedback(dom.giftFormFeedback, "", "");
 
       try {
@@ -1050,7 +1130,7 @@
           sortOrder: dom.giftSortOrder.value || Date.now(),
           name: name,
           purchaseUrl: purchaseUrl,
-          imageDataUrl: currentGiftImageDataUrl,
+          imageDataUrl: state.currentGiftImageDataUrl,
           isActive: dom.giftIsActive.checked
         });
 
@@ -1081,8 +1161,8 @@
         return;
       }
 
-      ui.setText(dom.tableSubmitButton, "Salvando...");
       dom.tableSubmitButton.disabled = true;
+      ui.setText(dom.tableSubmitButton, "Salvando...");
       setFeedback(dom.tableFormFeedback, "", "");
 
       try {
@@ -1105,60 +1185,8 @@
     });
   }
 
-  function stopSubscriptions() {
-    if (unsubscribeFamilies) {
-      unsubscribeFamilies();
-      unsubscribeFamilies = null;
-    }
-
-    if (unsubscribeGiftItems) {
-      unsubscribeGiftItems();
-      unsubscribeGiftItems = null;
-    }
-
-    if (unsubscribeTables) {
-      unsubscribeTables();
-      unsubscribeTables = null;
-    }
-
-    subscriptionsStarted = false;
-  }
-
-  async function syncAdminState(user) {
-    if (!user) {
-      dom.adminLoginSection.hidden = false;
-      dom.adminDashboardSection.hidden = true;
-      stopSubscriptions();
-      return;
-    }
-
-    var isAdmin = await api.currentUserIsAdmin();
-
-    if (!isAdmin) {
-      await api.logoutAdmin();
-      dom.adminLoginSection.hidden = false;
-      dom.adminDashboardSection.hidden = true;
-      stopSubscriptions();
-      dom.adminPassword.value = "";
-      dom.adminEmail.value = String(defaultConfig.adminAuth && defaultConfig.adminAuth.email || "");
-      setFeedback(dom.adminLoginFeedback, "error", "Esta conta nao possui permissao administrativa.");
-      return;
-    }
-
-    dom.adminLoginSection.hidden = true;
-    dom.adminDashboardSection.hidden = false;
-
-    if (!subscriptionsStarted) {
-      subscriptionsStarted = true;
-      await loadSiteSettings();
-      subscribeFamilies();
-      subscribeGifts();
-      subscribeTables();
-    }
-  }
-
   function initialize() {
-    if (!api) {
+    if (!api || !ui) {
       setFeedback(dom.adminLoginFeedback, "error", "Firebase nao foi carregado corretamente para o painel.");
       return;
     }
@@ -1172,12 +1200,14 @@
     resetGiftForm();
     resetTableForm();
     populateSiteSettingsForm();
-    setupLogin();
+    setupLoginForm();
     setupFamilyForm();
     setupSiteSettingsForm();
     setupGiftForm();
     setupTableForm();
+    showLoggedOutState();
     ui.setupRevealAnimations();
+
     api.observeAuthState(function (user) {
       syncAdminState(user);
     });
