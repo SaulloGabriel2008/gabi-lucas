@@ -1,4 +1,29 @@
-import { getDbInstance, getServerTimestamp, getStorageInstance } from "./app.mjs";
+﻿import { firebaseConfig } from "../config/site-config.mjs";
+
+function getFirebaseNamespace() {
+  if (!window.firebase) {
+    throw new Error("Firebase SDK nÃ£o foi carregado.");
+  }
+
+  return window.firebase;
+}
+
+function getApp() {
+  const firebase = getFirebaseNamespace();
+  return firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
+}
+
+export function getAuth() {
+  return getApp().auth();
+}
+
+export function getDb() {
+  return getApp().firestore();
+}
+
+export function getServerTimestamp() {
+  return getFirebaseNamespace().firestore.FieldValue.serverTimestamp();
+}
 
 function mapDoc(snapshot) {
   return {
@@ -38,77 +63,65 @@ function normalizeGuestStatus(status) {
   return "pending";
 }
 
-function sanitizeStorageName(value) {
-  return String(value || "imagem")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9._-]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .toLowerCase() || "imagem";
-}
-
 async function loadGuestsForFamily(familyId) {
-  const guestsSnapshot = await getDbInstance()
+  const snapshot = await getDb()
     .collection("families")
     .doc(familyId)
     .collection("guests")
     .get();
 
-  return sortByText(guestsSnapshot.docs.map(mapDoc), "name");
+  return sortByText(snapshot.docs.map(mapDoc), "name");
 }
 
 async function ensureInviteSlugAvailable(slug, familyId) {
-  const snapshot = await getDbInstance().collection("inviteLinks").doc(slug).get();
+  const snapshot = await getDb().collection("inviteLinks").doc(slug).get();
 
   if (snapshot.exists && snapshot.data().familyId !== familyId) {
-    const error = new Error("Já existe um convite com esse slug.");
+    const error = new Error("JÃ¡ existe um convite com esse slug.");
     error.code = "family/slug-already-exists";
     throw error;
   }
 }
 
-async function uploadGiftImage(giftId, file) {
-  const storage = getStorageInstance();
-  const extension = String(file?.name || "imagem.jpg").split(".").pop();
-  const safeFileName = sanitizeStorageName(file?.name || `gift.${extension}`);
-  const fullPath = `gift-images/${giftId}/${Date.now()}-${safeFileName}`;
-  const snapshot = await storage.ref(fullPath).put(file);
-  const imageUrl = await snapshot.ref.getDownloadURL();
+export async function loginAdmin(email, password) {
+  const auth = getAuth();
+  const firebase = getFirebaseNamespace();
 
-  return {
-    imagePath: snapshot.ref.fullPath,
-    imageUrl
-  };
+  await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+  return auth.signInWithEmailAndPassword(String(email || "").trim(), String(password || ""));
 }
 
-async function deleteStoragePath(imagePath) {
-  if (!imagePath) {
-    return;
+export async function logoutAdmin() {
+  return getAuth().signOut();
+}
+
+export function observeAuthState(callback) {
+  return getAuth().onAuthStateChanged(callback);
+}
+
+export async function loadAdminProfile(user) {
+  if (!user?.uid) {
+    return null;
   }
 
-  try {
-    await getStorageInstance().ref(imagePath).delete();
-  } catch (error) {
-    if (error?.code !== "storage/object-not-found") {
-      throw error;
-    }
-  }
+  const snapshot = await getDb().collection("admins").doc(user.uid).get();
+  return snapshot.exists ? { id: snapshot.id, ...snapshot.data() } : null;
 }
 
 export async function loadSiteSettings() {
-  const snapshot = await getDbInstance().collection("siteSettings").doc("main").get();
+  const snapshot = await getDb().collection("siteSettings").doc("main").get();
   return snapshot.exists ? snapshot.data() : null;
 }
 
 export async function saveSiteSettings(settings) {
-  await getDbInstance().collection("siteSettings").doc("main").set({
+  await getDb().collection("siteSettings").doc("main").set({
     ...settings,
     updatedAt: getServerTimestamp()
   }, { merge: true });
 }
 
 export async function saveFamily(familyInput) {
-  const db = getDbInstance();
+  const db = getDb();
   const familyId = String(familyInput?.id || "").trim();
   const familyRef = familyId
     ? db.collection("families").doc(familyId)
@@ -118,7 +131,7 @@ export async function saveFamily(familyInput) {
   const slug = String(familyInput?.slug || "").trim().toLowerCase();
 
   if (!slug) {
-    throw new Error("Slug do convite é obrigatório.");
+    throw new Error("Slug do convite Ã© obrigatÃ³rio.");
   }
 
   await ensureInviteSlugAvailable(slug, familyRef.id);
@@ -130,21 +143,17 @@ export async function saveFamily(familyInput) {
   const now = getServerTimestamp();
   const previousSlug = String(existingFamily?.slug || "").trim().toLowerCase();
 
-  const familyPayload = {
+  batch.set(familyRef, {
     familyName: String(familyInput?.familyName || "").trim(),
     displayName: String(familyInput?.displayName || "").trim(),
     customMessage: String(familyInput?.customMessage || "").trim(),
     attendanceNote: String(familyInput?.attendanceNote || "").trim(),
     slug,
     isActive: Boolean(familyInput?.isActive),
-    updatedAt: now
-  };
+    updatedAt: now,
+    ...(existingSnapshot?.exists ? {} : { createdAt: now })
+  }, { merge: true });
 
-  if (!existingSnapshot?.exists) {
-    familyPayload.createdAt = now;
-  }
-
-  batch.set(familyRef, familyPayload, { merge: true });
   batch.set(db.collection("inviteLinks").doc(slug), {
     familyId: familyRef.id,
     isActive: Boolean(familyInput?.isActive),
@@ -165,18 +174,13 @@ export async function saveFamily(familyInput) {
 
     nextGuestIds.add(guestRef.id);
 
-    const guestPayload = {
+    batch.set(guestRef, {
       name: String(guest?.name || "").trim(),
       responseStatus: normalizeGuestStatus(guest?.responseStatus),
       tableId: String(guest?.tableId || "").trim(),
-      updatedAt: now
-    };
-
-    if (!guestId) {
-      guestPayload.createdAt = now;
-    }
-
-    batch.set(guestRef, guestPayload, { merge: true });
+      updatedAt: now,
+      ...(guestId ? {} : { createdAt: now })
+    }, { merge: true });
   });
 
   existingGuestsSnapshot?.forEach((guestSnapshot) => {
@@ -186,23 +190,21 @@ export async function saveFamily(familyInput) {
   });
 
   await batch.commit();
-
   return familyRef.id;
 }
 
 export async function toggleFamilyActive(familyId, isActive) {
-  const db = getDbInstance();
+  const db = getDb();
   const familyRef = db.collection("families").doc(familyId);
   const snapshot = await familyRef.get();
 
   if (!snapshot.exists) {
-    throw new Error("Família não encontrada.");
+    throw new Error("FamÃ­lia nÃ£o encontrada.");
   }
 
-  const family = snapshot.data();
-  const slug = String(family.slug || "").trim().toLowerCase();
-  const batch = db.batch();
+  const slug = String(snapshot.data().slug || "").trim().toLowerCase();
   const now = getServerTimestamp();
+  const batch = db.batch();
 
   batch.set(familyRef, {
     isActive: Boolean(isActive),
@@ -211,7 +213,7 @@ export async function toggleFamilyActive(familyId, isActive) {
 
   if (slug) {
     batch.set(db.collection("inviteLinks").doc(slug), {
-      familyId: familyRef.id,
+      familyId,
       isActive: Boolean(isActive),
       updatedAt: now
     }, { merge: true });
@@ -221,7 +223,7 @@ export async function toggleFamilyActive(familyId, isActive) {
 }
 
 export function subscribeFamilies(callback, errorCallback) {
-  return getDbInstance().collection("families").onSnapshot(async (snapshot) => {
+  return getDb().collection("families").onSnapshot(async (snapshot) => {
     try {
       const families = await Promise.all(snapshot.docs.map(async (familySnapshot) => {
         const family = mapDoc(familySnapshot);
@@ -237,29 +239,25 @@ export function subscribeFamilies(callback, errorCallback) {
 }
 
 export async function saveTable(tableInput) {
-  const db = getDbInstance();
   const tableId = String(tableInput?.id || "").trim();
   const tableRef = tableId
-    ? db.collection("tables").doc(tableId)
-    : db.collection("tables").doc();
-  const payload = {
+    ? getDb().collection("tables").doc(tableId)
+    : getDb().collection("tables").doc();
+
+  await tableRef.set({
     name: String(tableInput?.name || "").trim(),
     capacity: Number(tableInput?.capacity || 0),
     notes: String(tableInput?.notes || "").trim(),
     sortOrder: Number(tableInput?.sortOrder || Date.now()),
-    updatedAt: getServerTimestamp()
-  };
+    updatedAt: getServerTimestamp(),
+    ...(tableId ? {} : { createdAt: getServerTimestamp() })
+  }, { merge: true });
 
-  if (!tableId) {
-    payload.createdAt = getServerTimestamp();
-  }
-
-  await tableRef.set(payload, { merge: true });
   return tableRef.id;
 }
 
 export async function deleteTable(tableId) {
-  const db = getDbInstance();
+  const db = getDb();
   const guestSnapshots = await db.collectionGroup("guests").where("tableId", "==", tableId).get();
   const batch = db.batch();
   const now = getServerTimestamp();
@@ -271,8 +269,10 @@ export async function deleteTable(tableId) {
       updatedAt: now
     }, { merge: true });
 
-    if (guestSnapshot.ref.parent?.parent?.id) {
-      touchedFamilies.add(guestSnapshot.ref.parent.parent.id);
+    const familyId = guestSnapshot.ref.parent?.parent?.id;
+
+    if (familyId) {
+      touchedFamilies.add(familyId);
     }
   });
 
@@ -287,95 +287,66 @@ export async function deleteTable(tableId) {
 }
 
 export async function assignGuestToTable(familyId, guestId, tableId) {
-  const db = getDbInstance();
   const now = getServerTimestamp();
 
-  await db.collection("families").doc(familyId).collection("guests").doc(guestId).set({
+  await getDb().collection("families").doc(familyId).collection("guests").doc(guestId).update({
     tableId: String(tableId || "").trim(),
     updatedAt: now
-  }, { merge: true });
+  });
 
-  await db.collection("families").doc(familyId).set({
+  await getDb().collection("families").doc(familyId).set({
     updatedAt: now
   }, { merge: true });
 }
 
 export function subscribeTables(callback, errorCallback) {
-  return getDbInstance().collection("tables").onSnapshot((snapshot) => {
+  return getDb().collection("tables").onSnapshot((snapshot) => {
     callback(sortBySortOrder(snapshot.docs.map(mapDoc)));
   }, errorCallback);
 }
 
 export async function saveGiftItem(giftInput) {
-  const db = getDbInstance();
   const giftId = String(giftInput?.id || "").trim();
   const giftRef = giftId
-    ? db.collection("gifts").doc(giftId)
-    : db.collection("gifts").doc();
-  const existingSnapshot = giftId ? await giftRef.get() : null;
-  const existingGift = existingSnapshot?.exists ? existingSnapshot.data() : null;
-  let imagePath = String(existingGift?.imagePath || giftInput?.existingImagePath || "").trim();
-  let imageUrl = String(existingGift?.imageUrl || giftInput?.existingImageUrl || "").trim();
+    ? getDb().collection("gifts").doc(giftId)
+    : getDb().collection("gifts").doc();
+  const imageUrl = String(giftInput?.imageUrl || "").trim();
 
-  if (giftInput?.imageFile) {
-    const uploadResult = await uploadGiftImage(giftRef.id, giftInput.imageFile);
-    imagePath = uploadResult.imagePath;
-    imageUrl = uploadResult.imageUrl;
-  }
-
-  if (!imagePath || !imageUrl) {
-    const error = new Error("A imagem do presente é obrigatória.");
+  if (!imageUrl) {
+    const error = new Error("A URL da imagem do presente Ã© obrigatÃ³ria.");
     error.code = "gift/image-required";
     throw error;
   }
 
-  const payload = {
+  await giftRef.set({
     name: String(giftInput?.name || "").trim(),
     purchaseUrl: String(giftInput?.purchaseUrl || "").trim(),
-    imagePath,
     imageUrl,
     isActive: Boolean(giftInput?.isActive),
     sortOrder: Number(giftInput?.sortOrder || Date.now()),
-    updatedAt: getServerTimestamp()
-  };
-
-  if (!existingSnapshot?.exists) {
-    payload.createdAt = getServerTimestamp();
-  }
-
-  await giftRef.set(payload, { merge: true });
-
-  if (giftInput?.imageFile && existingGift?.imagePath && existingGift.imagePath !== imagePath) {
-    await deleteStoragePath(existingGift.imagePath);
-  }
+    updatedAt: getServerTimestamp(),
+    ...(giftId ? {} : { createdAt: getServerTimestamp() })
+  }, { merge: true });
 
   return giftRef.id;
 }
 
-export async function deleteGiftItem(gift) {
-  const giftId = typeof gift === "string" ? gift : gift?.id;
-
+export async function deleteGiftItem(giftId) {
   if (!giftId) {
     return;
   }
 
-  const snapshot = await getDbInstance().collection("gifts").doc(giftId).get();
-  const imagePath = typeof gift === "object"
-    ? gift?.imagePath || snapshot.data()?.imagePath
-    : snapshot.data()?.imagePath;
-
-  await getDbInstance().collection("gifts").doc(giftId).delete();
-  await deleteStoragePath(imagePath);
+  await getDb().collection("gifts").doc(giftId).delete();
 }
 
 export function subscribeGiftItems(callback, errorCallback) {
-  return getDbInstance().collection("gifts").onSnapshot((snapshot) => {
+  return getDb().collection("gifts").onSnapshot((snapshot) => {
     callback(sortBySortOrder(snapshot.docs.map(mapDoc)));
   }, errorCallback);
 }
 
 export async function listGiftItems(options = {}) {
-  let query = getDbInstance().collection("gifts");
+  let query = getDb().collection("gifts");
 
   if (options.activeOnly) {
     query = query.where("isActive", "==", true);
@@ -392,7 +363,7 @@ export async function fetchInviteBySlug(slugInput) {
     return null;
   }
 
-  const inviteLinkSnapshot = await getDbInstance().collection("inviteLinks").doc(slug).get();
+  const inviteLinkSnapshot = await getDb().collection("inviteLinks").doc(slug).get();
 
   if (!inviteLinkSnapshot.exists || inviteLinkSnapshot.data().isActive !== true) {
     return null;
@@ -404,7 +375,7 @@ export async function fetchInviteBySlug(slugInput) {
     return null;
   }
 
-  const familySnapshot = await getDbInstance().collection("families").doc(familyId).get();
+  const familySnapshot = await getDb().collection("families").doc(familyId).get();
 
   if (!familySnapshot.exists || familySnapshot.data().isActive !== true) {
     return null;
@@ -416,15 +387,14 @@ export async function fetchInviteBySlug(slugInput) {
 }
 
 export async function submitInviteResponse(familyId, payload) {
-  const db = getDbInstance();
-  const familyRef = db.collection("families").doc(familyId);
+  const familyRef = getDb().collection("families").doc(familyId);
   const familySnapshot = await familyRef.get();
 
   if (!familySnapshot.exists || familySnapshot.data().isActive !== true) {
-    throw new Error("Convite indisponível.");
+    throw new Error("Convite indisponÃ­vel.");
   }
 
-  const batch = db.batch();
+  const batch = getDb().batch();
   const now = getServerTimestamp();
 
   (payload?.guests || []).forEach((guest) => {
@@ -432,10 +402,10 @@ export async function submitInviteResponse(familyId, payload) {
       return;
     }
 
-    batch.set(familyRef.collection("guests").doc(guest.id), {
+    batch.update(familyRef.collection("guests").doc(guest.id), {
       responseStatus: normalizeGuestStatus(guest.responseStatus),
       updatedAt: now
-    }, { merge: true });
+    });
   });
 
   batch.set(familyRef, {

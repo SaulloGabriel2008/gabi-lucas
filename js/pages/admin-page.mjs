@@ -1,10 +1,13 @@
-import { defaultSiteConfig } from "../config/site-config.mjs";
-import { loadAdminProfile, loginAdmin, logoutAdmin, observeAuthState } from "../firebase/auth-service.mjs";
+﻿import { defaultSiteConfig } from "../config/site-config.mjs";
 import {
   assignGuestToTable,
   deleteGiftItem,
   deleteTable,
+  loadAdminProfile,
   loadSiteSettings,
+  loginAdmin,
+  logoutAdmin,
+  observeAuthState,
   saveFamily,
   saveGiftItem,
   saveSiteSettings,
@@ -13,7 +16,7 @@ import {
   subscribeGiftItems,
   subscribeTables,
   toggleFamilyActive
-} from "../firebase/data-service.mjs";
+} from "../firebase/client.mjs";
 import {
   createElement,
   formatGuestStatus,
@@ -79,7 +82,7 @@ const dom = {
   giftSortOrder: document.querySelector("#giftSortOrder"),
   giftName: document.querySelector("#giftName"),
   giftPurchaseUrl: document.querySelector("#giftPurchaseUrl"),
-  giftImageFile: document.querySelector("#giftImageFile"),
+  giftImageUrl: document.querySelector("#giftImageUrl"),
   giftImagePreviewShell: document.querySelector("#giftImagePreviewShell"),
   giftImagePreview: document.querySelector("#giftImagePreview"),
   giftIsActive: document.querySelector("#giftIsActive"),
@@ -107,8 +110,6 @@ const state = {
   gifts: [],
   tables: [],
   mergedSiteConfig: buildRuntimeConfig(),
-  currentGiftImageFile: null,
-  currentGiftPreviewUrl: "",
   logoutMessage: "",
   unsubscribeFamilies: null,
   unsubscribeGifts: null,
@@ -150,9 +151,10 @@ function setLoginBusy(isBusy) {
   dom.adminLoginButton.disabled = isBusy;
   dom.adminEmail.disabled = isBusy;
   dom.adminPassword.disabled = isBusy;
-  setText(dom.adminLoginButton, isBusy
-    ? defaultSiteConfig.adminSite.login.loadingLabel
-    : defaultSiteConfig.adminSite.login.submitLabel);
+  setText(
+    dom.adminLoginButton,
+    isBusy ? defaultSiteConfig.adminSite.login.loadingLabel : defaultSiteConfig.adminSite.login.submitLabel
+  );
 }
 
 function getAdminLoginErrorMessage(error) {
@@ -161,7 +163,7 @@ function getAdminLoginErrorMessage(error) {
   }
 
   if (error.code === "auth/invalid-email") {
-    return "Informe um email válido para continuar.";
+    return "Informe um email vÃ¡lido para continuar.";
   }
 
   if (
@@ -169,23 +171,23 @@ function getAdminLoginErrorMessage(error) {
     || error.code === "auth/invalid-credential"
     || error.code === "auth/invalid-login-credentials"
   ) {
-    return "A senha informada está incorreta.";
+    return "A senha informada estÃ¡ incorreta.";
   }
 
   if (error.code === "auth/user-not-found") {
-    return "Esse usuário ainda não foi criado no Firebase Authentication.";
+    return "Esse usuÃ¡rio ainda nÃ£o foi criado no Firebase Authentication.";
   }
 
   if (error.code === "auth/operation-not-allowed") {
-    return "O login por Email/Senha ainda não foi habilitado no Firebase Authentication.";
+    return "O login por Email/Senha ainda nÃ£o foi habilitado no Firebase Authentication.";
   }
 
   if (error.code === "auth/unauthorized-domain") {
-    return "Este domínio ainda não foi autorizado no Firebase Authentication.";
+    return "Este domÃ­nio ainda nÃ£o foi autorizado no Firebase Authentication.";
   }
 
   if (error.code === "auth/network-request-failed") {
-    return "Não foi possível conectar ao Firebase agora. Verifique sua internet e tente novamente.";
+    return "NÃ£o foi possÃ­vel conectar ao Firebase agora. Verifique sua internet e tente novamente.";
   }
 
   if (error.code === "auth/too-many-requests") {
@@ -208,12 +210,7 @@ function showLoggedOutState(message = "") {
   dom.adminLoginSection.hidden = false;
   dom.adminDashboardSection.hidden = true;
   dom.adminPassword.value = "";
-
-  if (message) {
-    setFeedback(dom.adminLoginFeedback, "error", message);
-  } else {
-    setFeedback(dom.adminLoginFeedback, "", "");
-  }
+  setFeedback(dom.adminLoginFeedback, message ? "error" : "", message);
 }
 
 function showLoggedInState() {
@@ -224,6 +221,15 @@ function showLoggedInState() {
 
 function buildInviteUrl(slug) {
   return new URL(`convite.html?slug=${encodeURIComponent(slug)}`, window.location.href).href;
+}
+
+function isValidUrl(value) {
+  try {
+    const url = new URL(String(value || "").trim());
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch (error) {
+    return false;
+  }
 }
 
 function resolveTableName(tableId) {
@@ -243,9 +249,12 @@ function createEmptyState(message) {
 
 function updateMemberEditorHint() {
   const total = dom.memberEditorList.querySelectorAll(".member-editor-item").length;
-  setText(dom.memberEditorHint, total
-    ? `${total} nome${total > 1 ? "s cadastrados." : " cadastrado."}`
-    : "Adicione uma linha para cada pessoa convidada. A quantidade total será calculada automaticamente.");
+  setText(
+    dom.memberEditorHint,
+    total
+      ? `${total} nome${total > 1 ? "s cadastrados." : " cadastrado."}`
+      : "Adicione uma linha para cada pessoa convidada. A quantidade total serÃ¡ calculada automaticamente."
+  );
 }
 
 function updateMemberEditorMeta(item) {
@@ -325,6 +334,7 @@ function populateFamilyForm(family) {
   dom.familySlug.value = family.slug || "";
   dom.isActive.checked = family.isActive !== false;
   dom.memberEditorList.innerHTML = "";
+
   (family.guests || []).forEach((member) => createMemberEditorItem(member));
 
   if (!(family.guests || []).length) {
@@ -339,13 +349,12 @@ function populateFamilyForm(family) {
 function renderStats() {
   dom.adminStatsGrid.innerHTML = "";
 
-  const totalFamilies = state.families.length;
-  const guests = state.families.flatMap((family) => family.guests || []);
-  const summary = summarizeGuests(guests);
+  const allGuests = state.families.flatMap((family) => family.guests || []);
+  const summary = summarizeGuests(allGuests);
   const activeGifts = state.gifts.filter((gift) => gift.isActive !== false).length;
 
   [
-    { label: "Famílias", value: totalFamilies },
+    { label: "FamÃ­lias", value: state.families.length },
     { label: "Convidados", value: summary.invitedCount },
     { label: "Confirmados", value: summary.confirmedCount },
     { label: "Presentes ativos", value: activeGifts }
@@ -363,7 +372,7 @@ function renderFamilies() {
   dom.familyList.innerHTML = "";
 
   if (!state.families.length) {
-    dom.familyList.appendChild(createEmptyState("Nenhuma família cadastrada ainda."));
+    dom.familyList.appendChild(createEmptyState("Nenhuma famÃ­lia cadastrada ainda."));
     return;
   }
 
@@ -373,7 +382,7 @@ function renderFamilies() {
     const card = createElement("article", "panel family-card");
     const header = createElement("div", "family-card-header");
     const headerText = createElement("div");
-    const title = createElement("h3", "panel-title", family.familyName || "Família sem nome");
+    const title = createElement("h3", "panel-title", family.familyName || "FamÃ­lia sem nome");
     const subtitle = createElement("p", "section-body compact-body", family.displayName || "");
     const badge = createElement("span", `status-badge status-${summary.responseStatus}`, formatInviteStatus(summary.responseStatus));
     headerText.append(title, subtitle);
@@ -386,6 +395,14 @@ function renderFamilies() {
       createElement("p", "section-body compact-body", isActive ? "Convite ativo" : "Convite oculto")
     );
 
+    if (family.customMessage) {
+      info.appendChild(createElement("p", "section-body compact-body", `Mensagem: ${family.customMessage}`));
+    }
+
+    if (family.attendanceNote) {
+      info.appendChild(createElement("p", "section-body compact-body", `ObservaÃ§Ã£o enviada: ${family.attendanceNote}`));
+    }
+
     const guestsList = createElement("div", "member-chip-list");
     (family.guests || []).forEach((member) => {
       const chip = createElement("div", "member-chip");
@@ -395,14 +412,6 @@ function renderFamilies() {
       );
       guestsList.appendChild(chip);
     });
-
-    if (family.customMessage) {
-      info.appendChild(createElement("p", "section-body compact-body", `Mensagem: ${family.customMessage}`));
-    }
-
-    if (family.attendanceNote) {
-      info.appendChild(createElement("p", "section-body compact-body", `Observação enviada: ${family.attendanceNote}`));
-    }
 
     const actions = createElement("div", "inline-actions");
     const editButton = createElement("button", "button button-secondary button-solid-light", "Editar");
@@ -414,9 +423,9 @@ function renderFamilies() {
     copyButton.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(buildInviteUrl(family.slug));
-        setFeedback(dom.familyFormFeedback, "success", "Link copiado para a área de transferência.");
+        setFeedback(dom.familyFormFeedback, "success", "Link copiado para a Ã¡rea de transferÃªncia.");
       } catch (error) {
-        setFeedback(dom.familyFormFeedback, "error", "Não foi possível copiar o link agora.");
+        setFeedback(dom.familyFormFeedback, "error", "NÃ£o foi possÃ­vel copiar o link agora.");
       }
     });
 
@@ -427,7 +436,7 @@ function renderFamilies() {
         await toggleFamilyActive(family.id, !isActive);
         setFeedback(dom.familyFormFeedback, "success", "Status do convite atualizado.");
       } catch (error) {
-        setFeedback(dom.familyFormFeedback, "error", "Não foi possível alterar este convite.");
+        setFeedback(dom.familyFormFeedback, "error", "NÃ£o foi possÃ­vel alterar este convite.");
       }
     });
 
@@ -437,10 +446,10 @@ function renderFamilies() {
   });
 }
 
-function renderGiftPreview(dataUrl) {
-  state.currentGiftPreviewUrl = dataUrl || "";
-  dom.giftImagePreviewShell.hidden = !state.currentGiftPreviewUrl;
-  dom.giftImagePreview.src = state.currentGiftPreviewUrl || "";
+function renderGiftPreview(imageUrl) {
+  const normalizedUrl = String(imageUrl || "").trim();
+  dom.giftImagePreviewShell.hidden = !normalizedUrl;
+  dom.giftImagePreview.src = normalizedUrl || "";
 }
 
 function resetGiftForm() {
@@ -448,7 +457,6 @@ function resetGiftForm() {
   dom.giftId.value = "";
   dom.giftSortOrder.value = "";
   dom.giftIsActive.checked = true;
-  state.currentGiftImageFile = null;
   renderGiftPreview("");
   setText(dom.giftSubmitButton, "Salvar presente");
   setFeedback(dom.giftFormFeedback, "", "");
@@ -459,9 +467,8 @@ function populateGiftForm(gift) {
   dom.giftSortOrder.value = String(gift.sortOrder || "");
   dom.giftName.value = gift.name || "";
   dom.giftPurchaseUrl.value = gift.purchaseUrl || "";
+  dom.giftImageUrl.value = gift.imageUrl || "";
   dom.giftIsActive.checked = gift.isActive !== false;
-  dom.giftImageFile.value = "";
-  state.currentGiftImageFile = null;
   renderGiftPreview(gift.imageUrl || "");
   setText(dom.giftSubmitButton, "Atualizar presente");
   setFeedback(dom.giftFormFeedback, "", "");
@@ -489,7 +496,7 @@ function renderGiftList() {
     body.append(
       createElement("h3", "panel-title", gift.name),
       createElement("p", "section-body compact-body", gift.purchaseUrl || "Sem link de compra"),
-      createElement("p", "section-body compact-body", gift.isActive !== false ? "Visível no site" : "Oculto no site")
+      createElement("p", "section-body compact-body", gift.isActive !== false ? "VisÃ­vel no site" : "Oculto no site")
     );
 
     const actions = createElement("div", "inline-actions");
@@ -506,13 +513,12 @@ function renderGiftList() {
           sortOrder: gift.sortOrder,
           name: gift.name,
           purchaseUrl: gift.purchaseUrl,
-          isActive: gift.isActive === false,
-          existingImagePath: gift.imagePath,
-          existingImageUrl: gift.imageUrl
+          imageUrl: gift.imageUrl,
+          isActive: gift.isActive === false
         });
         setFeedback(dom.giftFormFeedback, "success", "Visibilidade do presente atualizada.");
       } catch (error) {
-        setFeedback(dom.giftFormFeedback, "error", "Não foi possível atualizar esse presente.");
+        setFeedback(dom.giftFormFeedback, "error", "NÃ£o foi possÃ­vel atualizar esse presente.");
       }
     });
 
@@ -524,10 +530,10 @@ function renderGiftList() {
       }
 
       try {
-        await deleteGiftItem(gift);
-        setFeedback(dom.giftFormFeedback, "success", "Presente excluído.");
+        await deleteGiftItem(gift.id);
+        setFeedback(dom.giftFormFeedback, "success", "Presente excluÃ­do.");
       } catch (error) {
-        setFeedback(dom.giftFormFeedback, "error", "Não foi possível excluir este presente.");
+        setFeedback(dom.giftFormFeedback, "error", "NÃ£o foi possÃ­vel excluir este presente.");
       }
     });
 
@@ -580,18 +586,20 @@ function renderTablesBoard() {
   const confirmedGuests = collectConfirmedGuests();
 
   if (!state.tables.length) {
-    dom.tablesBoard.appendChild(createEmptyState("Cadastre as mesas para visualizar o mapa e a ocupação."));
+    dom.tablesBoard.appendChild(createEmptyState("Cadastre as mesas para visualizar o mapa e a ocupaÃ§Ã£o."));
     return;
   }
 
   state.tables.forEach((table) => {
     const assignedGuests = confirmedGuests.filter((guest) => guest.tableId === table.id);
-    const capacity = Number(table.capacity || 0);
-    const occupancyLabel = `${assignedGuests.length}/${capacity || 0} lugares preenchidos`;
     const card = createElement("article", "panel table-board-card");
     const title = createElement("h3", "panel-title", table.name);
-    const subtitle = createElement("p", "section-body compact-body", occupancyLabel);
-    const notes = createElement("p", "section-body compact-body", table.notes || "Sem observações.");
+    const subtitle = createElement(
+      "p",
+      "section-body compact-body",
+      `${assignedGuests.length}/${Number(table.capacity || 0)} lugares preenchidos`
+    );
+    const notes = createElement("p", "section-body compact-body", table.notes || "Sem observaÃ§Ãµes.");
     const list = createElement("div", "member-chip-list");
 
     if (!assignedGuests.length) {
@@ -621,9 +629,9 @@ function renderTablesBoard() {
 
       try {
         await deleteTable(table.id);
-        setFeedback(dom.tableFormFeedback, "success", "Mesa excluída.");
+        setFeedback(dom.tableFormFeedback, "success", "Mesa excluÃ­da.");
       } catch (error) {
-        setFeedback(dom.tableFormFeedback, "error", "Não foi possível excluir esta mesa.");
+        setFeedback(dom.tableFormFeedback, "error", "NÃ£o foi possÃ­vel excluir esta mesa.");
       }
     });
 
@@ -638,7 +646,7 @@ function renderSeatAssignmentList() {
   const confirmedGuests = collectConfirmedGuests();
 
   if (!confirmedGuests.length) {
-    dom.seatAssignmentList.appendChild(createEmptyState("As confirmações aparecerão aqui assim que chegarem."));
+    dom.seatAssignmentList.appendChild(createEmptyState("As confirmaÃ§Ãµes aparecerÃ£o aqui assim que chegarem."));
     return;
   }
 
@@ -655,8 +663,7 @@ function renderSeatAssignmentList() {
     select.appendChild(new Option("Sem mesa", ""));
 
     state.tables.forEach((table) => {
-      const option = new Option(table.name, table.id, false, table.id === guest.tableId);
-      select.appendChild(option);
+      select.appendChild(new Option(table.name, table.id, false, table.id === guest.tableId));
     });
 
     select.addEventListener("change", async () => {
@@ -666,7 +673,7 @@ function renderSeatAssignmentList() {
         await assignGuestToTable(guest.familyId, guest.guestId, select.value);
         setFeedback(dom.seatAssignmentFeedback, "success", "Mesa atualizada com sucesso.");
       } catch (error) {
-        setFeedback(dom.seatAssignmentFeedback, "error", "Não foi possível alterar esta mesa.");
+        setFeedback(dom.seatAssignmentFeedback, "error", "NÃ£o foi possÃ­vel alterar esta mesa.");
         select.value = guest.tableId || "";
       } finally {
         select.disabled = false;
@@ -709,65 +716,17 @@ function populateSiteSettingsForm() {
   dom.settingsShowGifts.checked = config.features.showGifts !== false;
 }
 
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-function optimizeImageFile(file) {
-  if (!file) {
-    return Promise.resolve({ file: null, previewUrl: "" });
-  }
-
-  if (file.type === "image/svg+xml") {
-    return readFileAsDataUrl(file).then((previewUrl) => ({ file, previewUrl }));
-  }
-
-  return readFileAsDataUrl(file).then((dataUrl) => new Promise((resolve, reject) => {
-    const image = new Image();
-
-    image.onload = () => {
-      const maxSize = 1400;
-      const ratio = Math.min(1, maxSize / Math.max(image.width, image.height));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(image.width * ratio));
-      canvas.height = Math.max(1, Math.round(image.height * ratio));
-      const context = canvas.getContext("2d");
-
-      context.drawImage(image, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          reject(new Error("Não foi possível processar a imagem."));
-          return;
-        }
-
-        const optimizedFile = new File([blob], `${slugify(file.name || "presente") || "presente"}.jpg`, {
-          type: "image/jpeg"
-        });
-
-        resolve({
-          file: optimizedFile,
-          previewUrl: canvas.toDataURL("image/jpeg", 0.86)
-        });
-      }, "image/jpeg", 0.86);
-    };
-
-    image.onerror = reject;
-    image.src = dataUrl;
-  }));
-}
-
 async function loadRemoteSiteSettings() {
   try {
     const remoteSettings = await loadSiteSettings();
     state.mergedSiteConfig = buildRuntimeConfig(remoteSettings || {});
   } catch (error) {
     state.mergedSiteConfig = buildRuntimeConfig();
-    setFeedback(dom.siteSettingsFeedback, "error", "Não foi possível carregar as informações salvas do site. O formulário exibirá os valores padrão.");
+    setFeedback(
+      dom.siteSettingsFeedback,
+      "error",
+      "NÃ£o foi possÃ­vel carregar as informaÃ§Ãµes salvas do site. O formulÃ¡rio exibirÃ¡ os valores padrÃ£o."
+    );
   }
 
   populateSiteSettingsForm();
@@ -784,15 +743,15 @@ function startSubscriptions() {
     state.families = families;
     renderAdminState();
   }, () => {
-    setFeedback(dom.familyFormFeedback, "error", "Não foi possível carregar a lista de famílias.");
+    setFeedback(dom.familyFormFeedback, "error", "NÃ£o foi possÃ­vel carregar a lista de famÃ­lias.");
   });
 
   state.unsubscribeGifts = subscribeGiftItems((gifts) => {
     state.gifts = gifts;
-    renderGiftList();
     renderStats();
+    renderGiftList();
   }, () => {
-    setFeedback(dom.giftFormFeedback, "error", "Não foi possível carregar a lista de presentes.");
+    setFeedback(dom.giftFormFeedback, "error", "NÃ£o foi possÃ­vel carregar a lista de presentes.");
   });
 
   state.unsubscribeTables = subscribeTables((tables) => {
@@ -800,7 +759,7 @@ function startSubscriptions() {
     renderAdminState();
     Array.from(dom.memberEditorList.querySelectorAll(".member-editor-item")).forEach(updateMemberEditorMeta);
   }, () => {
-    setFeedback(dom.tableFormFeedback, "error", "Não foi possível carregar as mesas.");
+    setFeedback(dom.tableFormFeedback, "error", "NÃ£o foi possÃ­vel carregar as mesas.");
   });
 }
 
@@ -831,7 +790,7 @@ async function syncAdminState(user) {
     const adminProfile = await loadAdminProfile(user);
 
     if (!adminProfile?.active) {
-      state.logoutMessage = "Esta conta não possui permissão administrativa. Cadastre o UID em admins/{uid} com active = true.";
+      state.logoutMessage = "Esta conta nÃ£o possui permissÃ£o administrativa. Cadastre o UID em admins/{uid} com active = true.";
       await logoutAdmin();
       return;
     }
@@ -841,13 +800,15 @@ async function syncAdminState(user) {
     await loadRemoteSiteSettings();
     startSubscriptions();
   } catch (error) {
-    state.logoutMessage = "Não foi possível validar as permissões do admin agora.";
+    state.logoutMessage = "NÃ£o foi possÃ­vel validar as permissÃµes do admin agora.";
     stopSubscriptions();
+
     try {
       await logoutAdmin();
     } catch (logoutError) {
-      // Ignora falha de limpeza e mantém a mensagem para o próximo estado.
+      // Ignora a falha de limpeza.
     }
+
     showLoggedOutState(state.logoutMessage);
   }
 }
@@ -882,7 +843,7 @@ function setupLoginForm() {
     try {
       await logoutAdmin();
     } catch (error) {
-      setFeedback(dom.adminLoginFeedback, "error", "Não foi possível encerrar a sessão agora.");
+      setFeedback(dom.adminLoginFeedback, "error", "NÃ£o foi possÃ­vel encerrar a sessÃ£o agora.");
     }
   });
 }
@@ -890,7 +851,7 @@ function setupLoginForm() {
 function setupFamilyForm() {
   dom.generateSlugButton.addEventListener("click", () => {
     const source = dom.familySlug.value || dom.familyName.value || dom.displayName.value;
-    dom.familySlug.value = source ? slugify(source) : generateReadableInviteSlug(dom.familyName.value || dom.displayName.value);
+    dom.familySlug.value = source ? slugify(source) : generateReadableInviteSlug(source);
   });
 
   dom.addMemberButton.addEventListener("click", () => {
@@ -911,7 +872,7 @@ function setupFamilyForm() {
     const existingFamily = state.families.find((family) => family.id === dom.familyId.value);
 
     if (!familyName || !displayName || !slug) {
-      setFeedback(dom.familyFormFeedback, "error", "Preencha família, nome exibido e o slug do convite.");
+      setFeedback(dom.familyFormFeedback, "error", "Preencha famÃ­lia, nome exibido e o slug do convite.");
       return;
     }
 
@@ -940,9 +901,9 @@ function setupFamilyForm() {
       resetFamilyForm();
     } catch (error) {
       if (error?.code === "family/slug-already-exists") {
-        setFeedback(dom.familyFormFeedback, "error", "Já existe um convite com esse slug. Escolha outro.");
+        setFeedback(dom.familyFormFeedback, "error", "JÃ¡ existe um convite com esse slug. Escolha outro.");
       } else {
-        setFeedback(dom.familyFormFeedback, "error", "Não foi possível salvar este convite.");
+        setFeedback(dom.familyFormFeedback, "error", "NÃ£o foi possÃ­vel salvar este convite.");
       }
     } finally {
       dom.familySubmitButton.disabled = false;
@@ -963,7 +924,7 @@ function setupSiteSettingsForm() {
     const mapsUrl = String(dom.settingsMapsUrl.value || "").trim();
 
     if (!dateText || !dateTime || !venueName || !venueAddress || !mapsLabel || !mapsUrl) {
-      setFeedback(dom.siteSettingsFeedback, "error", "Preencha data, horário, local, endereço e link do mapa.");
+      setFeedback(dom.siteSettingsFeedback, "error", "Preencha data, horÃ¡rio, local, endereÃ§o e link do mapa.");
       return;
     }
 
@@ -1009,12 +970,12 @@ function setupSiteSettingsForm() {
     try {
       await saveSiteSettings(payload);
       state.mergedSiteConfig = buildRuntimeConfig(payload);
-      setFeedback(dom.siteSettingsFeedback, "success", "Informações do site atualizadas.");
+      setFeedback(dom.siteSettingsFeedback, "success", "InformaÃ§Ãµes do site atualizadas.");
     } catch (error) {
-      setFeedback(dom.siteSettingsFeedback, "error", "Não foi possível salvar as informações do site.");
+      setFeedback(dom.siteSettingsFeedback, "error", "NÃ£o foi possÃ­vel salvar as informaÃ§Ãµes do site.");
     } finally {
       dom.siteSettingsSubmitButton.disabled = false;
-      setText(dom.siteSettingsSubmitButton, "Salvar informações do site");
+      setText(dom.siteSettingsSubmitButton, "Salvar informaÃ§Ãµes do site");
     }
   });
 }
@@ -1024,24 +985,8 @@ function setupGiftForm() {
     resetGiftForm();
   });
 
-  dom.giftImageFile.addEventListener("change", async () => {
-    const file = dom.giftImageFile.files?.[0];
-
-    if (!file) {
-      state.currentGiftImageFile = null;
-      return;
-    }
-
-    try {
-      const optimizedImage = await optimizeImageFile(file);
-      state.currentGiftImageFile = optimizedImage.file;
-      renderGiftPreview(optimizedImage.previewUrl);
-      setFeedback(dom.giftFormFeedback, "", "");
-    } catch (error) {
-      state.currentGiftImageFile = null;
-      renderGiftPreview("");
-      setFeedback(dom.giftFormFeedback, "error", "Não foi possível processar essa imagem.");
-    }
+  dom.giftImageUrl.addEventListener("input", () => {
+    renderGiftPreview(dom.giftImageUrl.value);
   });
 
   dom.giftForm.addEventListener("submit", async (event) => {
@@ -1049,15 +994,25 @@ function setupGiftForm() {
 
     const name = String(dom.giftName.value || "").trim();
     const purchaseUrl = String(dom.giftPurchaseUrl.value || "").trim();
-    const existingGift = state.gifts.find((gift) => gift.id === dom.giftId.value);
+    const imageUrl = String(dom.giftImageUrl.value || "").trim();
 
     if (!name) {
       setFeedback(dom.giftFormFeedback, "error", "Informe o nome do presente.");
       return;
     }
 
-    if (!state.currentGiftImageFile && !existingGift?.imageUrl) {
-      setFeedback(dom.giftFormFeedback, "error", "Adicione uma foto para o presente.");
+    if (!imageUrl) {
+      setFeedback(dom.giftFormFeedback, "error", "Informe a URL da imagem do presente.");
+      return;
+    }
+
+    if (!isValidUrl(imageUrl)) {
+      setFeedback(dom.giftFormFeedback, "error", "Informe uma URL de imagem vÃ¡lida.");
+      return;
+    }
+
+    if (purchaseUrl && !isValidUrl(purchaseUrl)) {
+      setFeedback(dom.giftFormFeedback, "error", "Informe um link de compra vÃ¡lido.");
       return;
     }
 
@@ -1071,19 +1026,17 @@ function setupGiftForm() {
         sortOrder: dom.giftSortOrder.value || Date.now(),
         name,
         purchaseUrl,
-        isActive: dom.giftIsActive.checked,
-        imageFile: state.currentGiftImageFile,
-        existingImagePath: existingGift?.imagePath,
-        existingImageUrl: existingGift?.imageUrl
+        imageUrl,
+        isActive: dom.giftIsActive.checked
       });
 
       setFeedback(dom.giftFormFeedback, "success", "Presente salvo com sucesso.");
       resetGiftForm();
     } catch (error) {
       if (error?.code === "gift/image-required") {
-        setFeedback(dom.giftFormFeedback, "error", "A imagem do presente é obrigatória.");
+        setFeedback(dom.giftFormFeedback, "error", "A URL da imagem do presente Ã© obrigatÃ³ria.");
       } else {
-        setFeedback(dom.giftFormFeedback, "error", "Não foi possível salvar este presente.");
+        setFeedback(dom.giftFormFeedback, "error", "NÃ£o foi possÃ­vel salvar este presente.");
       }
     } finally {
       dom.giftSubmitButton.disabled = false;
@@ -1104,7 +1057,7 @@ function setupTableForm() {
     const capacity = Number(dom.tableCapacity.value || 0);
 
     if (!name || !capacity) {
-      setFeedback(dom.tableFormFeedback, "error", "Informe o nome da mesa e uma capacidade válida.");
+      setFeedback(dom.tableFormFeedback, "error", "Informe o nome da mesa e uma capacidade vÃ¡lida.");
       return;
     }
 
@@ -1124,7 +1077,7 @@ function setupTableForm() {
       setFeedback(dom.tableFormFeedback, "success", "Mesa salva com sucesso.");
       resetTableForm();
     } catch (error) {
-      setFeedback(dom.tableFormFeedback, "error", "Não foi possível salvar esta mesa.");
+      setFeedback(dom.tableFormFeedback, "error", "NÃ£o foi possÃ­vel salvar esta mesa.");
     } finally {
       dom.tableSubmitButton.disabled = false;
       setText(dom.tableSubmitButton, "Salvar mesa");

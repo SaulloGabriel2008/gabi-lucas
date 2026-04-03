@@ -1,4 +1,4 @@
-function isPlainObject(value) {
+﻿function isPlainObject(value) {
   return Boolean(value) && Object.prototype.toString.call(value) === "[object Object]";
 }
 
@@ -212,7 +212,7 @@ export function formatGuestStatus(status) {
   }
 
   if (status === "declined") {
-    return "Não vai";
+    return "NÃ£o vai";
   }
 
   return "Sem resposta";

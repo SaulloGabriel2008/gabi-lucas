@@ -1,20 +1,18 @@
-# Firebase Setup (`gabielucas`)
+﻿# Firebase Setup (`gabielucas`)
 
-## Serviços necessários
+## ServiÃ§os necessÃ¡rios
 - Habilite `Authentication > Sign-in method > Email/Password`.
 - Crie o banco em `Firestore Database`.
-- Habilite o `Storage`.
 
-## Configuração usada no site
+## ConfiguraÃ§Ã£o usada no site
 - `projectId`: `gabielucas`
 - `authDomain`: `gabielucas.firebaseapp.com`
-- `storageBucket`: `gabielucas.firebasestorage.app`
 
 ## Primeiro admin
-1. Crie o usuário em `Authentication > Users`.
-2. Abra o usuário criado e copie o `UID`.
+1. Crie o usuÃ¡rio em `Authentication > Users`.
+2. Abra o usuÃ¡rio criado e copie o `UID`.
 3. Em `Firestore Database`, crie o documento `admins/{UID}`.
-4. Use este conteúdo inicial:
+4. Use este conteÃºdo inicial:
 
 ```json
 {
@@ -24,7 +22,7 @@
 }
 ```
 
-## Estrutura de dados da v1
+## Estrutura de dados da v2
 - `siteSettings/main`
 - `admins/{uid}`
 - `gifts/{giftId}`
@@ -35,10 +33,12 @@
 
 ## Deploy local
 ```bash
-firebase deploy --only hosting,firestore:rules,storage
+firebase deploy --only hosting,firestore:rules
 ```
 
-## Observações
-- O painel admin não usa email fixo hardcoded.
-- O acesso depende de login no Firebase Auth e da presença de `admins/{uid}` com `active = true`.
-- As imagens dos presentes são enviadas para `Storage > gift-images/...`.
+## ObservaÃ§Ãµes
+- O site nÃ£o usa Firebase Functions.
+- O site nÃ£o usa Firebase Storage.
+- O painel admin nÃ£o usa email fixo hardcoded.
+- O acesso depende de login no Firebase Auth e da presenÃ§a de `admins/{uid}` com `active = true`.
+- As imagens dos presentes sÃ£o salvas como `imageUrl` no Firestore.

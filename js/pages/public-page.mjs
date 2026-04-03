@@ -1,5 +1,5 @@
-import { defaultSiteConfig } from "../config/site-config.mjs";
-import { loadPublicSiteData } from "../firebase/data-service.mjs";
+﻿import { defaultSiteConfig } from "../config/site-config.mjs";
+import { loadPublicSiteData } from "../firebase/client.mjs";
 import {
   applyMediaPresentation,
   createElement,
@@ -125,7 +125,7 @@ function renderGifts(config, giftItems) {
       }));
 
   if (!items.length) {
-    dom.giftsList.appendChild(createElement("p", "section-body", "A lista de presentes será publicada em breve."));
+    dom.giftsList.appendChild(createElement("p", "section-body", "A lista de presentes serÃ¡ publicada em breve."));
     return;
   }
 

@@ -19,9 +19,26 @@ service cloud.firestore {
       return /databases/$(database)/documents/families/$(familyId);
     }
 
+    function invitePath(slug) {
+      return /databases/$(database)/documents/inviteLinks/$(slug);
+    }
+
+    function inviteIsActiveForFamily(slug, familyId) {
+      return slug is string
+        && slug != ''
+        && exists(invitePath(slug))
+        && get(invitePath(slug)).data.isActive == true
+        && get(invitePath(slug)).data.familyId == familyId;
+    }
+
     function familyIsActive(familyId) {
       return exists(familyPath(familyId))
         && get(familyPath(familyId)).data.isActive == true;
+    }
+
+    function familyInviteIsActive(familyId) {
+      return familyIsActive(familyId)
+        && inviteIsActiveForFamily(get(familyPath(familyId)).data.slug, familyId);
     }
 
     match /admins/{userId} {
@@ -52,11 +69,14 @@ service cloud.firestore {
     }
 
     match /families/{familyId} {
-      allow get: if isAdmin() || resource.data.isActive == true;
+      allow get: if isAdmin() || (
+        resource.data.isActive == true
+        && inviteIsActiveForFamily(resource.data.slug, familyId)
+      );
       allow list: if isAdmin();
       allow create, delete: if isAdmin();
       allow update: if isAdmin() || (
-        resource.data.isActive == true
+        familyInviteIsActive(familyId)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'attendanceNote',
           'updatedAt'
@@ -64,10 +84,10 @@ service cloud.firestore {
       );
 
       match /guests/{guestId} {
-        allow get, list: if isAdmin() || familyIsActive(familyId);
+        allow get, list: if isAdmin() || familyInviteIsActive(familyId);
         allow create, delete: if isAdmin();
         allow update: if isAdmin() || (
-          familyIsActive(familyId)
+          familyInviteIsActive(familyId)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'responseStatus',
             'updatedAt'
