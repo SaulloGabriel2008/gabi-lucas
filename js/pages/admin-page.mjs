@@ -675,10 +675,12 @@ async function handleFamilySave(event) {
     setFeedback(dom.familyFormFeedback, "success", "Convite salvo com sucesso.");
     setGlobalFeedback("success", "Convite salvo. Você já pode copiar o link e enviar.");
   } catch (error) {
+    console.error("Erro ao salvar convite:", error);
     if (error?.code === "family/slug-already-exists") {
       setFeedback(dom.familyFormFeedback, "error", "Já existe um convite com esse link. Clique em 'Editar link' e escolha outro.");
     } else {
-      setFeedback(dom.familyFormFeedback, "error", "Não foi possível salvar este convite agora.");
+      const message = error?.message || "Não foi possível salvar este convite agora.";
+      setFeedback(dom.familyFormFeedback, "error", message);
     }
   } finally {
     dom.familySubmitButton.disabled = false;
@@ -931,8 +933,10 @@ async function handleTableSave(event) {
     setFeedback(dom.tableFormFeedback, "success", "Mesa salva com sucesso.");
     setGlobalFeedback("success", "Mesa salva.");
     openNewTableEditor();
-  } catch {
-    setFeedback(dom.tableFormFeedback, "error", "Não foi possível salvar esta mesa agora.");
+  } catch (error) {
+    console.error("Erro ao salvar mesa:", error);
+    const message = error?.message || "Não foi possível salvar esta mesa agora.";
+    setFeedback(dom.tableFormFeedback, "error", message);
   } finally {
     dom.tableSubmitButton.disabled = false;
     setText(dom.tableSubmitButton, "Salvar mesa");
@@ -1299,8 +1303,10 @@ async function handleGiftSave(event) {
     setFeedback(dom.giftFormFeedback, "success", "Presente salvo com sucesso.");
     setGlobalFeedback("success", "Presente salvo.");
     openNewGiftEditor();
-  } catch {
-    setFeedback(dom.giftFormFeedback, "error", "Não foi possível salvar esse presente agora.");
+  } catch (error) {
+    console.error("Erro ao salvar presente:", error);
+    const message = error?.message || "Não foi possível salvar esse presente agora.";
+    setFeedback(dom.giftFormFeedback, "error", message);
   } finally {
     dom.giftSubmitButton.disabled = false;
     setText(dom.giftSubmitButton, "Salvar presente");
@@ -1427,8 +1433,10 @@ async function handleSiteSave(event) {
     state.siteConfig = buildRuntimeConfig(mergeDeep(state.siteConfig, payload));
     setFeedback(dom.siteSettingsFeedback, "success", "Informações do site salvas com sucesso.");
     setGlobalFeedback("success", "Conteúdo do site atualizado.");
-  } catch {
-    setFeedback(dom.siteSettingsFeedback, "error", "Não foi possível salvar as informações do site agora.");
+  } catch (error) {
+    console.error("Erro ao salvar configurações do site:", error);
+    const message = error?.message || "Não foi possível salvar as informações do site agora.";
+    setFeedback(dom.siteSettingsFeedback, "error", message);
   } finally {
     dom.siteSettingsSubmitButton.disabled = false;
     setText(dom.siteSettingsSubmitButton, "Salvar informações do site");
