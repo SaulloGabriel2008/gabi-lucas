@@ -1548,6 +1548,12 @@ async function syncAdminState(user) {
 
     state.user = user;
     state.profile = profile;
+    console.log("-----------------------------------------");
+    console.log("DIAGNÓSTICO ADMIN:");
+    console.log("UID:", user.uid);
+    console.log("Email:", user.email);
+    console.log("Profile Active:", profile?.active);
+    console.log("-----------------------------------------");
     showLoggedInState();
     await loadRemoteSiteSettings();
     startSubscriptions();
