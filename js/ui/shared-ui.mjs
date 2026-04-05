@@ -212,7 +212,7 @@ export function formatGuestStatus(status) {
   }
 
   if (status === "declined") {
-    return "NÃ£o vai";
+    return "Não vai";
   }
 
   return "Sem resposta";

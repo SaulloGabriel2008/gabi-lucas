@@ -12,23 +12,23 @@ export const defaultSiteConfig = {
     monogram: "A & L",
     dateText: "18 de setembro de 2027",
     dateTime: "2027-09-18T16:30:00-03:00",
-    subtitle: "Um encontro celebrado com calma, afeto e a alegria de reunir quem sempre fez parte da nossa histÃ³ria."
+    subtitle: "Um encontro celebrado com calma, afeto e a alegria de reunir quem sempre fez parte da nossa história."
   },
   navigation: {
     items: {
-      story: "HistÃ³ria",
+      story: "História",
       schedule: "Agenda",
       gifts: "Presentes",
       location: "Local"
     },
-    primaryCtaLabel: "Confirmar presenÃ§a",
+    primaryCtaLabel: "Confirmar presença",
     primaryCtaHref: "#rsvp",
     secondaryCtaLabel: "Ver local",
     secondaryCtaHref: "#local"
   },
   event: {
     venueName: "Villa Placeholder",
-    address: "Rua das AcÃ¡cias, 245, Jardim das Flores, Cidade Exemplo",
+    address: "Rua das Acácias, 245, Jardim das Flores, Cidade Exemplo",
     mapsLabel: "Abrir no Google Maps",
     mapsUrl: "https://maps.google.com/?q=Rua%20das%20Ac%C3%A1cias%20245"
   },
@@ -55,9 +55,9 @@ export const defaultSiteConfig = {
       }
     },
     intro: {
-      kicker: "Nosso capÃ­tulo",
-      title: "Um amor construÃ­do em detalhes leves, no tempo certo e com muito significado.",
-      body: "Este espaÃ§o foi preparado para receber o texto definitivo da histÃ³ria do casal. Por enquanto, ele funciona como uma base elegante e fÃ¡cil de editar sem mexer na estrutura do layout.",
+      kicker: "Nosso capítulo",
+      title: "Um amor construído em detalhes leves, no tempo certo e com muito significado.",
+      body: "Este espaço foi preparado para receber o texto definitivo da história do casal. Por enquanto, ele funciona como uma base elegante e fácil de editar sem mexer na estrutura do layout.",
       photos: [
         {
           src: "assets/IMG_8758.JPG.jpeg",
@@ -76,7 +76,7 @@ export const defaultSiteConfig = {
         },
         {
           src: "assets/IMG_8749.JPG.jpeg",
-          alt: "Ana e Lucas em um momento romÃ¢ntico durante o pedido",
+          alt: "Ana e Lucas em um momento romântico durante o pedido",
           fit: "contain",
           positions: {
             mobile: "center center",
@@ -93,13 +93,13 @@ export const defaultSiteConfig = {
     },
     story: {
       kicker: "Mensagem",
-      title: "Mais do que uma data, este serÃ¡ um espaÃ§o de memÃ³ria, presenÃ§a e celebraÃ§Ã£o.",
-      body: "A seÃ§Ã£o abaixo pode receber uma mensagem mais pessoal sobre o significado do dia, a alegria de dividir esse momento e o carinho por cada convidado presente na celebraÃ§Ã£o.",
+      title: "Mais do que uma data, este será um espaço de memória, presença e celebração.",
+      body: "A seção abaixo pode receber uma mensagem mais pessoal sobre o significado do dia, a alegria de dividir esse momento e o carinho por cada convidado presente na celebração.",
       buttonLabel: "Descobrir o local",
       buttonHref: "#local",
       image: {
         src: "assets/IMG_8755.JPG.jpeg",
-        alt: "Ana e Lucas em uma composiÃ§Ã£o intimista com luz suave",
+        alt: "Ana e Lucas em uma composição intimista com luz suave",
         fit: "contain",
         positions: {
           mobile: "center center",
@@ -115,21 +115,21 @@ export const defaultSiteConfig = {
     },
     schedule: {
       kicker: "Agenda do dia",
-      title: "Cada momento com seu prÃ³prio ritmo, do encontro inicial ao Ãºltimo brinde.",
-      intro: "Os horÃ¡rios abaixo sÃ£o ilustrativos e podem ser alterados depois sem mudar a composiÃ§Ã£o da pÃ¡gina.",
+      title: "Cada momento com seu próprio ritmo, do encontro inicial ao último brinde.",
+      intro: "Os horários abaixo são ilustrativos e podem ser alterados depois sem mudar a composição da página.",
       items: [
         {
-          title: "CerimÃ´nia",
+          title: "Cerimônia",
           time: "16h30",
-          description: "RecepÃ§Ã£o dos convidados e inÃ­cio da cerimÃ´nia em um ambiente sereno e cheio de significado."
+          description: "Recepção dos convidados e início da cerimônia em um ambiente sereno e cheio de significado."
         },
         {
-          title: "RecepÃ§Ã£o",
+          title: "Recepção",
           time: "18h00",
-          description: "Boas-vindas, mÃºsica e um primeiro encontro entre abraÃ§os, conversas e brindes."
+          description: "Boas-vindas, música e um primeiro encontro entre abraços, conversas e brindes."
         },
         {
-          title: "CelebraÃ§Ã£o",
+          title: "Celebração",
           time: "19h30",
           description: "Jantar, pista e uma noite preparada para ser lembrada com leveza e alegria."
         }
@@ -137,21 +137,21 @@ export const defaultSiteConfig = {
     },
     gifts: {
       kicker: "Lista de presentes",
-      title: "SugestÃµes carinhosas para quem deseja participar desse novo comeÃ§o.",
-      intro: "Os itens abaixo continuam como placeholders elegantes, mas jÃ¡ ficam prontos para serem substituÃ­dos pela lista final.",
+      title: "Sugestões carinhosas para quem deseja participar desse novo começo.",
+      intro: "Os itens abaixo continuam como placeholders elegantes, mas já ficam prontos para serem substituídos pela lista final.",
       items: [
-        { name: "Jogo de taÃ§as para celebraÃ§Ãµes", description: "Uma peÃ§a pensada para encontros especiais Ã  mesa." },
+        { name: "Jogo de taças para celebrações", description: "Uma peça pensada para encontros especiais à mesa." },
         { name: "Roupa de cama em linho leve", description: "Texturas suaves para o cotidiano da nova casa." },
-        { name: "Aparelho de jantar atemporal", description: "Linhas clÃ¡ssicas para refeiÃ§Ãµes com convidados." },
-        { name: "Conjunto de velas aromÃ¡ticas", description: "Atmosfera acolhedora para noites tranquilas." },
+        { name: "Aparelho de jantar atemporal", description: "Linhas clássicas para refeições com convidados." },
+        { name: "Conjunto de velas aromáticas", description: "Atmosfera acolhedora para noites tranquilas." },
         { name: "Mesa lateral de madeira natural", description: "Um detalhe elegante para a sala ou o quarto." },
-        { name: "Jarra de cerÃ¢mica artesanal", description: "Objeto decorativo com presenÃ§a delicada." }
+        { name: "Jarra de cerâmica artesanal", description: "Objeto decorativo com presença delicada." }
       ]
     },
     gallery: {
       kicker: "Galeria",
-      title: "Imagens que ajudam a contar a atmosfera dessa celebraÃ§Ã£o.",
-      intro: "A estrutura abaixo aceita os arquivos finais depois, mas jÃ¡ foi ajustada para preservar melhor o enquadramento das fotos atuais.",
+      title: "Imagens que ajudam a contar a atmosfera dessa celebração.",
+      intro: "A estrutura abaixo aceita os arquivos finais depois, mas já foi ajustada para preservar melhor o enquadramento das fotos atuais.",
       items: [
         {
           src: "assets/IMG_8765.JPG.jpeg",
@@ -171,7 +171,7 @@ export const defaultSiteConfig = {
         },
         {
           src: "assets/IMG_8770.JPG.jpeg",
-          alt: "Detalhe delicado das mÃ£os e flores do casal",
+          alt: "Detalhe delicado das mãos e flores do casal",
           caption: "Leveza",
           fit: "cover",
           positions: {
@@ -203,8 +203,8 @@ export const defaultSiteConfig = {
         },
         {
           src: "assets/IMG_8758.JPG.jpeg",
-          alt: "Ana e Lucas em um retrato romÃ¢ntico com sorriso",
-          caption: "MemÃ³ria",
+          alt: "Ana e Lucas em um retrato romântico com sorriso",
+          caption: "Memória",
           fit: "contain",
           positions: {
             mobile: "center center",
@@ -221,40 +221,40 @@ export const defaultSiteConfig = {
     },
     countdown: {
       kicker: "Contagem regressiva",
-      title: "Falta pouco para esse encontro ganhar som, luz e presenÃ§a.",
-      intro: "O contador utiliza a data definida na configuraÃ§Ã£o e se atualiza automaticamente em tempo real.",
+      title: "Falta pouco para esse encontro ganhar som, luz e presença.",
+      intro: "O contador utiliza a data definida na configuração e se atualiza automaticamente em tempo real.",
       labels: {
         days: "Dias",
         hours: "Horas",
         minutes: "Minutos",
         seconds: "Segundos"
       },
-      fallbackText: "O grande dia jÃ¡ chegou. Agora Ã© tempo de celebrar."
+      fallbackText: "O grande dia já chegou. Agora é tempo de celebrar."
     },
     footer: {
       signature: "Ana & Lucas",
-      message: "Com carinho, esperamos viver esse momento ao lado das pessoas que fazem nossa histÃ³ria florescer."
+      message: "Com carinho, esperamos viver esse momento ao lado das pessoas que fazem nossa história florescer."
     }
   },
   inviteSite: {
     eyebrow: "Convite personalizado",
-    title: "Uma celebraÃ§Ã£o pensada para ser vivida com pessoas especiais.",
-    intro: "Esta pÃ¡gina serÃ¡ preenchida com o nome e a mensagem dedicados a cada famÃ­lia convidada.",
-    rsvpTitle: "Confirme a presenÃ§a de cada pessoa da sua famÃ­lia.",
-    rsvpBody: "Escolha, para cada convidado, se ele poderÃ¡ estar presente no casamento.",
+    title: "Uma celebração pensada para ser vivida com pessoas especiais.",
+    intro: "Esta página será preenchida com o nome e a mensagem dedicados a cada família convidada.",
+    rsvpTitle: "Confirme a presença de cada pessoa da sua família.",
+    rsvpBody: "Escolha, para cada convidado, se ele poderá estar presente no casamento.",
     fields: {
       noteLabel: "Mensagem opcional",
       submitLabel: "Confirmar resposta"
     },
     messages: {
       success: "Resposta registrada com sucesso. Obrigado por confirmar.",
-      missingInvite: "NÃ£o foi possÃ­vel localizar esse convite. Verifique o link enviado.",
-      loadError: "NÃ£o foi possÃ­vel carregar os dados do convite neste momento."
+      missingInvite: "Não foi possível localizar esse convite. Verifique o link enviado.",
+      loadError: "Não foi possível carregar os dados do convite neste momento."
     }
   },
   adminSite: {
     title: "Painel do casal",
-    subtitle: "Gerencie famÃ­lias convidadas, links personalizados, mesas, presentes e as informaÃ§Ãµes principais do site.",
+    subtitle: "Gerencie famílias convidadas, links personalizados, mesas, presentes e as informações principais do site.",
     login: {
       title: "Acesso do admin",
       body: "Entre com o email e a senha cadastrados no Firebase Authentication.",
@@ -262,8 +262,8 @@ export const defaultSiteConfig = {
       passwordLabel: "Senha",
       submitLabel: "Entrar no painel",
       loadingLabel: "Entrando...",
-      errorMessage: "NÃ£o foi possÃ­vel validar o acesso ao painel."
+      errorMessage: "Não foi possível validar o acesso ao painel."
     },
-    setupHint: "Primeiro acesso: crie o usuÃ¡rio em Authentication e registre o UID em admins/{uid} com active = true."
+    setupHint: "Primeiro acesso: crie o usuário em Authentication e registre o UID em admins/{uid} com active = true."
   }
 };

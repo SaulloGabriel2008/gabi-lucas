@@ -2,7 +2,7 @@
 
 function getFirebaseNamespace() {
   if (!window.firebase) {
-    throw new Error("Firebase SDK nÃ£o foi carregado.");
+    throw new Error("Firebase SDK não foi carregado.");
   }
 
   return window.firebase;
@@ -77,7 +77,7 @@ async function ensureInviteSlugAvailable(slug, familyId) {
   const snapshot = await getDb().collection("inviteLinks").doc(slug).get();
 
   if (snapshot.exists && snapshot.data().familyId !== familyId) {
-    const error = new Error("JÃ¡ existe um convite com esse slug.");
+    const error = new Error("Já existe um convite com esse slug.");
     error.code = "family/slug-already-exists";
     throw error;
   }
@@ -131,7 +131,7 @@ export async function saveFamily(familyInput) {
   const slug = String(familyInput?.slug || "").trim().toLowerCase();
 
   if (!slug) {
-    throw new Error("Slug do convite Ã© obrigatÃ³rio.");
+    throw new Error("Slug do convite é obrigatório.");
   }
 
   await ensureInviteSlugAvailable(slug, familyRef.id);
@@ -199,7 +199,7 @@ export async function toggleFamilyActive(familyId, isActive) {
   const snapshot = await familyRef.get();
 
   if (!snapshot.exists) {
-    throw new Error("FamÃ­lia nÃ£o encontrada.");
+    throw new Error("Família não encontrada.");
   }
 
   const slug = String(snapshot.data().slug || "").trim().toLowerCase();
@@ -313,7 +313,7 @@ export async function saveGiftItem(giftInput) {
   const imageUrl = String(giftInput?.imageUrl || "").trim();
 
   if (!imageUrl) {
-    const error = new Error("A URL da imagem do presente Ã© obrigatÃ³ria.");
+    const error = new Error("A URL da imagem do presente é obrigatória.");
     error.code = "gift/image-required";
     throw error;
   }
@@ -391,7 +391,7 @@ export async function submitInviteResponse(familyId, payload) {
   const familySnapshot = await familyRef.get();
 
   if (!familySnapshot.exists || familySnapshot.data().isActive !== true) {
-    throw new Error("Convite indisponÃ­vel.");
+    throw new Error("Convite indisponível.");
   }
 
   const batch = getDb().batch();

@@ -101,7 +101,7 @@ function renderGuestChoices(invite) {
     dom.inviteGuestList.appendChild(createElement(
       "p",
       "section-body",
-      "Este convite ainda nÃ£o foi configurado com nomes. Fale com os noivos para ajustar o cadastro."
+      "Este convite ainda não foi configurado com nomes. Fale com os noivos para ajustar o cadastro."
     ));
     return;
   }
@@ -113,8 +113,8 @@ function renderGuestChoices(invite) {
     const choices = createElement("div", "invite-choice-row");
 
     [
-      { value: "confirmed", label: "Confirmar presenÃ§a" },
-      { value: "declined", label: "NÃ£o poderÃ¡ comparecer" }
+      { value: "confirmed", label: "Confirmar presença" },
+      { value: "declined", label: "Não poderá comparecer" }
     ].forEach((option) => {
       const choice = createElement("label", "choice-pill");
       const input = createElement("input");
@@ -139,7 +139,7 @@ function renderInvite(invite) {
 
   document.title = `${invite.displayName} | Convite | ${runtimeConfig.couple.names}`;
   setText(dom.inviteFamilyTitle, invite.displayName);
-  setText(dom.inviteCustomMessage, invite.customMessage || "Preparamos esse convite com carinho para a sua famÃ­lia.");
+  setText(dom.inviteCustomMessage, invite.customMessage || "Preparamos esse convite com carinho para a sua família.");
   setText(dom.inviteReservedSeats, String(summary.invitedCount));
   setText(dom.inviteStatusText, formatInviteStatus(summary.responseStatus));
   dom.inviteNote.value = invite.attendanceNote || "";
@@ -151,7 +151,7 @@ async function loadInvite() {
 
   if (!slug) {
     setFeedback("error", runtimeConfig.inviteSite.messages.missingInvite);
-    setText(dom.inviteFamilyTitle, "Convite nÃ£o localizado");
+    setText(dom.inviteFamilyTitle, "Convite não localizado");
     return;
   }
 
@@ -160,14 +160,14 @@ async function loadInvite() {
 
     if (!invite) {
       setFeedback("error", runtimeConfig.inviteSite.messages.missingInvite);
-      setText(dom.inviteFamilyTitle, "Convite nÃ£o localizado");
+      setText(dom.inviteFamilyTitle, "Convite não localizado");
       return;
     }
 
     renderInvite(invite);
   } catch (error) {
     setFeedback("error", runtimeConfig.inviteSite.messages.loadError);
-    setText(dom.inviteFamilyTitle, "Convite indisponÃ­vel");
+    setText(dom.inviteFamilyTitle, "Convite indisponível");
   }
 }
 
@@ -197,7 +197,7 @@ function setupInviteForm() {
       const responseStatus = String(formData.get(`attendance_${guest.id}`) || "").trim();
 
       if (!responseStatus) {
-        setFeedback("error", "Selecione a presenÃ§a de todas as pessoas listadas no convite.");
+        setFeedback("error", "Selecione a presença de todas as pessoas listadas no convite.");
         return;
       }
 
@@ -230,7 +230,7 @@ function setupInviteForm() {
       setFeedback("success", runtimeConfig.inviteSite.messages.success);
       openSuccessModal();
     } catch (error) {
-      setFeedback("error", "NÃ£o foi possÃ­vel registrar sua resposta agora. Tente novamente.");
+      setFeedback("error", "Não foi possível registrar sua resposta agora. Tente novamente.");
     } finally {
       dom.inviteSubmitButton.disabled = false;
       setText(dom.inviteSubmitButton, runtimeConfig.inviteSite.fields.submitLabel);
@@ -266,5 +266,5 @@ async function initialize() {
 }
 
 initialize().catch(() => {
-  setFeedback("error", "Firebase nÃ£o foi carregado corretamente para esta pÃ¡gina.");
+  setFeedback("error", "Firebase não foi carregado corretamente para esta página.");
 });
