@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Painel administrativo dos convites personalizados de Ana e Lucas.">
+  <meta name="description" content="Painel administrativo simples dos convites personalizados de Ana e Lucas.">
   <title>Admin | Ana &amp; Lucas</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="site-body admin-body">
-  <main class="admin-shell">
+  <main class="admin-shell admin-flow-shell">
     <section id="adminLoginSection" class="admin-auth">
       <div class="panel panel-auth reveal">
         <p class="section-kicker">Acesso restrito</p>
@@ -31,87 +31,78 @@
       </div>
     </section>
 
-    <section id="adminDashboardSection" class="admin-dashboard" hidden>
-      <header class="panel admin-shell-header">
-        <div class="admin-shell-copy">
-          <p class="section-kicker">Painel do casal</p>
-          <h1 class="section-title admin-title">Convites, presentes, mesas e conteúdo</h1>
-          <p class="section-body">Organize tudo em um só lugar, com filtros, atalhos rápidos e rascunhos seguros.</p>
+    <section id="adminDashboardSection" class="admin-dashboard admin-flow-dashboard" hidden>
+      <header class="panel admin-flow-header">
+        <div class="admin-flow-header-copy">
+          <p class="section-kicker">Painel simples</p>
+          <h1 class="panel-title admin-flow-title">Convites e mesas sem complicação</h1>
+          <p id="adminStepDescription" class="section-body compact-body">
+            Organize as famílias, acompanhe as respostas e distribua as mesas em um fluxo guiado.
+          </p>
         </div>
-        <div class="admin-header-actions">
-          <a class="button button-secondary button-solid-light" href="index.html" target="_blank" rel="noreferrer">Ver landing</a>
-          <button id="adminPreviewInviteButton" class="button button-secondary button-solid-light" type="button">Ver convite</button>
-          <button id="adminLogoutButton" class="button button-primary" type="button">Sair</button>
-        </div>
-        <div class="admin-shell-status">
-          <span id="adminActiveTabLabel" class="admin-shell-chip">Aba ativa: Convites</span>
-          <span id="adminDraftIndicator" class="admin-shell-chip">Sem alterações não salvas</span>
+
+        <div class="admin-flow-header-meta">
+          <div class="admin-flow-chip-row">
+            <span id="adminProgressLabel" class="admin-flow-chip">Etapa 1 de 4</span>
+            <span id="adminHeaderSummary" class="admin-flow-chip">0 convites</span>
+          </div>
+
+          <div class="admin-flow-header-actions">
+            <a id="adminViewLandingButton" class="button button-secondary button-solid-light" href="index.html" target="_blank" rel="noreferrer">Ver landing</a>
+            <button id="adminPreviewInviteButton" class="button button-secondary button-solid-light" type="button">Ver convite</button>
+            <button id="adminPrimaryActionButton" class="button button-primary" type="button">Novo convite</button>
+            <button id="adminLogoutButton" class="button button-secondary admin-flow-logout" type="button">Sair</button>
+          </div>
         </div>
       </header>
 
-      <section class="stats-grid" id="adminStatsGrid"></section>
-
-      <nav class="panel admin-tabs" aria-label="Áreas do painel">
-        <button id="adminTabFamilies" class="admin-tab-button is-active" type="button" data-tab-target="families">Convites</button>
-        <button id="adminTabGifts" class="admin-tab-button" type="button" data-tab-target="gifts">Presentes</button>
-        <button id="adminTabTables" class="admin-tab-button" type="button" data-tab-target="tables">Mesas</button>
-        <button id="adminTabSite" class="admin-tab-button" type="button" data-tab-target="site">Site</button>
+      <nav class="panel admin-flow-steps" aria-label="Etapas do painel">
+        <button class="admin-flow-step is-active" type="button" data-step="families">1. Convites</button>
+        <button class="admin-flow-step" type="button" data-step="confirmations">2. Confirmações</button>
+        <button class="admin-flow-step" type="button" data-step="tables">3. Mesas</button>
+        <button class="admin-flow-step" type="button" data-step="advanced">4. Avançado</button>
       </nav>
 
       <p id="adminGlobalFeedback" class="form-feedback admin-global-feedback" role="status" aria-live="polite"></p>
 
-      <section id="adminTabPanelFamilies" class="admin-tab-panel is-active" data-tab-panel="families">
-        <div class="admin-tab-grid">
-          <div class="panel admin-list-panel">
-            <div class="admin-panel-header">
+      <section class="admin-flow-panel" data-step-panel="families">
+        <div class="admin-flow-grid admin-flow-grid-main">
+          <div class="panel admin-flow-list-panel">
+            <div class="admin-step-heading">
               <div>
-                <p class="section-kicker">Convites</p>
-                <h2 class="panel-title">Famílias cadastradas</h2>
-                <p class="section-body compact-body">Busque, filtre e abra qualquer convite em poucos cliques.</p>
-              </div>
-              <div class="inline-actions">
-                <button id="familyCreateNewButton" type="button" class="button button-secondary button-solid-light">Novo convite</button>
+                <p class="section-kicker">Etapa 1</p>
+                <h2 class="panel-subtitle">Convites</h2>
+                <p class="section-body compact-body">Cadastre uma família, cole os convidados em linhas separadas e salve.</p>
               </div>
             </div>
 
-            <div class="admin-toolbar">
-              <div class="field-group admin-toolbar-search">
-                <label for="familySearchInput">Buscar por família, convidado ou slug</label>
-                <input id="familySearchInput" name="familySearchInput" type="search" placeholder="Ex.: família Silva, Maria ou silva-festa">
-              </div>
-              <div id="familyFilterGroup" class="admin-filter-group" aria-label="Filtros dos convites">
-                <button type="button" class="filter-chip is-active" data-family-filter="all">Todos</button>
-                <button type="button" class="filter-chip" data-family-filter="active">Ativos</button>
-                <button type="button" class="filter-chip" data-family-filter="hidden">Ocultos</button>
-                <button type="button" class="filter-chip" data-family-filter="pending">Sem resposta</button>
-                <button type="button" class="filter-chip" data-family-filter="partial">Parcial</button>
-                <button type="button" class="filter-chip" data-family-filter="confirmed">Confirmado</button>
-              </div>
+            <div class="field-group">
+              <label for="familySearchInput">Buscar família, convidado ou link</label>
+              <input id="familySearchInput" name="familySearchInput" type="search" placeholder="Ex.: família Silva, Maria ou silva">
             </div>
 
             <p id="familyListSummary" class="admin-toolbar-summary"></p>
-            <div id="familyList" class="family-list"></div>
+            <div id="familyList" class="admin-simple-list"></div>
           </div>
 
-          <div class="panel admin-form-panel">
-            <div class="admin-panel-header">
+          <div class="panel admin-flow-form-panel">
+            <div class="admin-step-heading">
               <div>
-                <p class="section-kicker">Editor de convite</p>
-                <h2 id="familyFormTitle" class="panel-title">Novo convite</h2>
-                <p id="familyFormStatus" class="section-body compact-body">Monte o convite, revise os convidados e salve quando terminar.</p>
-              </div>
-              <div class="inline-actions">
-                <button id="familyDiscardDraftButton" type="button" class="button button-secondary button-solid-light">Descartar rascunho</button>
+                <p class="section-kicker">Cadastro</p>
+                <h2 id="familyFormTitle" class="panel-subtitle">Novo convite</h2>
+                <p id="familyFormStatus" class="section-body compact-body">Use poucos campos e salve assim que terminar.</p>
               </div>
             </div>
 
             <form id="familyForm" class="form-grid" novalidate>
               <input id="familyId" name="familyId" type="hidden">
+
               <div class="field-grid field-grid-2">
                 <div class="field-group">
                   <label for="familyName">Nome da família</label>
                   <input id="familyName" name="familyName" type="text" required>
                 </div>
+
                 <div class="field-group">
                   <label for="displayName">Nome exibido no convite</label>
                   <input id="displayName" name="displayName" type="text" required>
@@ -119,16 +110,13 @@
               </div>
 
               <div class="field-group">
-                <label for="customMessage">Mensagem personalizada</label>
+                <label for="customMessage">Mensagem opcional</label>
                 <textarea id="customMessage" name="customMessage" rows="4" placeholder="Escreva uma mensagem carinhosa para esta família."></textarea>
               </div>
 
               <div class="field-group">
-                <label for="familySlug">Slug do convite</label>
-                <div class="inline-inputs">
-                  <input id="familySlug" name="familySlug" type="text" placeholder="gerado automaticamente">
-                  <button id="generateSlugButton" type="button" class="button button-secondary button-solid-light">Gerar slug</button>
-                </div>
+                <label for="familyGuestsText">Convidados</label>
+                <textarea id="familyGuestsText" name="familyGuestsText" rows="8" placeholder="Um nome por linha&#10;Ana Silva&#10;Lucas Pereira&#10;Dona Maria" required></textarea>
               </div>
 
               <label class="toggle-line">
@@ -136,112 +124,177 @@
                 <span>Convite ativo</span>
               </label>
 
-              <div class="panel-subsection">
-                <div class="subsection-header">
-                  <div>
-                    <h3 class="panel-subtitle">Cadastro rápido de convidados</h3>
-                    <p class="section-body compact-body">Cole uma lista com um nome por linha para criar os convidados de uma vez.</p>
-                  </div>
+              <div class="admin-link-editor">
+                <div class="admin-link-editor-copy">
+                  <span class="family-link-label">Link do convite</span>
+                  <div id="familyAutoLinkPreview" class="family-link-box">O link será gerado automaticamente.</div>
                 </div>
-                <div class="field-group">
-                  <label for="memberBulkInput">Lista de convidados</label>
-                  <textarea id="memberBulkInput" name="memberBulkInput" rows="5" placeholder="Ana Silva&#10;Lucas Pereira&#10;Dona Maria"></textarea>
-                </div>
-                <div class="inline-actions">
-                  <button id="memberBulkApplyButton" type="button" class="button button-secondary button-solid-light">Adicionar nomes da lista</button>
-                  <button id="addMemberButton" type="button" class="button button-secondary button-solid-light">Adicionar nome manualmente</button>
-                </div>
+                <button id="familyToggleSlugButton" type="button" class="button button-secondary button-solid-light button-small">Editar link</button>
               </div>
 
-              <div class="panel-subsection">
-                <div class="subsection-header">
-                  <div>
-                    <h3 class="panel-subtitle">Convidados deste convite</h3>
-                    <p id="memberEditorHint" class="section-body compact-body">Adicione uma linha para cada pessoa convidada.</p>
-                  </div>
-                </div>
-                <div id="memberEditorList" class="member-editor-list"></div>
+              <div id="familySlugEditor" class="field-group" hidden>
+                <label for="familySlug">Slug do convite</label>
+                <input id="familySlug" name="familySlug" type="text" placeholder="ex.: familia-silva">
               </div>
+
+              <p id="familyRemovalHint" class="admin-inline-hint"></p>
 
               <div class="form-actions">
                 <button id="familySubmitButton" type="submit" class="button button-primary">Salvar convite</button>
-                <button id="familyResetButton" type="button" class="button button-secondary button-solid-light">Limpar formulário</button>
+                <button id="familyResetButton" type="button" class="button button-secondary button-solid-light">Novo convite</button>
               </div>
+
               <p id="familyFormFeedback" class="form-feedback" role="status" aria-live="polite"></p>
             </form>
+
+            <div id="familySavedActions" class="admin-saved-actions" hidden>
+              <div>
+                <span class="family-link-label">Último link salvo</span>
+                <div id="familySavedLink" class="family-link-box"></div>
+              </div>
+              <button id="familyCopyLinkButton" type="button" class="button button-secondary button-solid-light">Copiar link</button>
+            </div>
           </div>
         </div>
       </section>
-      <section id="adminTabPanelGifts" class="admin-tab-panel" data-tab-panel="gifts" hidden>
-        <div class="admin-tab-grid">
-          <div class="panel admin-list-panel">
-            <div class="admin-panel-header">
-              <div>
-                <p class="section-kicker">Presentes</p>
-                <h2 class="panel-title">Lista de presentes</h2>
-                <p class="section-body compact-body">Gerencie visibilidade, links e imagens sem perder o ritmo.</p>
-              </div>
-              <div class="inline-actions">
-                <button id="giftCreateNewButton" type="button" class="button button-secondary button-solid-light">Novo presente</button>
-              </div>
-            </div>
 
-            <div class="admin-toolbar">
-              <div class="field-group admin-toolbar-search">
-                <label for="giftSearchInput">Buscar por nome do presente</label>
-                <input id="giftSearchInput" name="giftSearchInput" type="search" placeholder="Ex.: taças, roupa de cama">
-              </div>
-              <div id="giftFilterGroup" class="admin-filter-group" aria-label="Filtros dos presentes">
-                <button type="button" class="filter-chip is-active" data-gift-filter="all">Todos</button>
-                <button type="button" class="filter-chip" data-gift-filter="active">Visíveis</button>
-                <button type="button" class="filter-chip" data-gift-filter="hidden">Ocultos</button>
-                <button type="button" class="filter-chip" data-gift-filter="with-link">Com link</button>
-                <button type="button" class="filter-chip" data-gift-filter="without-link">Sem link</button>
-                <button type="button" class="filter-chip" data-gift-filter="without-image">Sem imagem</button>
-              </div>
+      <section class="admin-flow-panel" data-step-panel="confirmations" hidden>
+        <div class="panel admin-flow-stack">
+          <div class="admin-step-heading">
+            <div>
+              <p class="section-kicker">Etapa 2</p>
+              <h2 class="panel-subtitle">Confirmações</h2>
+              <p class="section-body compact-body">Acompanhe rapidamente quem confirmou, quem recusou e quem ainda não respondeu.</p>
             </div>
-
-            <p id="giftListSummary" class="admin-toolbar-summary"></p>
-            <div id="giftList" class="gift-admin-list"></div>
           </div>
 
-          <div class="panel admin-form-panel">
-            <div class="admin-panel-header">
+          <div class="field-group">
+            <label for="confirmationsSearchInput">Buscar família ou convidado</label>
+            <input id="confirmationsSearchInput" name="confirmationsSearchInput" type="search" placeholder="Ex.: família Souza, João">
+          </div>
+
+          <p id="confirmationsListSummary" class="admin-toolbar-summary"></p>
+          <div id="confirmationsList" class="admin-simple-list"></div>
+        </div>
+      </section>
+
+      <section class="admin-flow-panel" data-step-panel="tables" hidden>
+        <div class="admin-flow-grid admin-flow-grid-main">
+          <div class="panel admin-flow-stack">
+            <div class="admin-step-heading">
               <div>
-                <p class="section-kicker">Editor de presente</p>
-                <h2 id="giftFormTitle" class="panel-title">Novo presente</h2>
-                <p id="giftFormStatus" class="section-body compact-body">Defina o nome, o link de compra, a imagem e a ordem de exibição.</p>
+                <p class="section-kicker">Etapa 3</p>
+                <h2 class="panel-subtitle">Cadastrar mesas</h2>
+                <p class="section-body compact-body">Crie as mesas e deixe a capacidade pronta antes de distribuir os confirmados.</p>
               </div>
-              <div class="inline-actions">
-                <button id="giftDiscardDraftButton" type="button" class="button button-secondary button-solid-light">Descartar rascunho</button>
+            </div>
+
+            <form id="tableForm" class="form-grid" novalidate>
+              <input id="tableId" name="tableId" type="hidden">
+
+              <div class="field-grid field-grid-2">
+                <div class="field-group">
+                  <label for="tableName">Nome da mesa</label>
+                  <input id="tableName" name="tableName" type="text" required>
+                </div>
+
+                <div class="field-group">
+                  <label for="tableCapacity">Capacidade</label>
+                  <input id="tableCapacity" name="tableCapacity" type="number" min="1" step="1" required>
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label for="tableNotes">Observações</label>
+                <textarea id="tableNotes" name="tableNotes" rows="3" placeholder="Ex.: perto da pista, familiares, crianças."></textarea>
+              </div>
+
+              <div class="form-actions">
+                <button id="tableSubmitButton" type="submit" class="button button-primary">Salvar mesa</button>
+                <button id="tableResetButton" type="button" class="button button-secondary button-solid-light">Nova mesa</button>
+              </div>
+
+              <p id="tableFormFeedback" class="form-feedback" role="status" aria-live="polite"></p>
+            </form>
+
+            <div class="admin-section-block">
+              <div class="admin-step-heading admin-step-heading-tight">
+                <div>
+                  <h3 class="panel-subtitle">Mesas cadastradas</h3>
+                </div>
+              </div>
+              <p id="tableListSummary" class="admin-toolbar-summary"></p>
+              <div id="tableList" class="admin-simple-list"></div>
+            </div>
+          </div>
+
+          <div class="admin-flow-stack">
+            <div class="panel admin-flow-stack">
+              <div class="admin-step-heading">
+                <div>
+                  <p class="section-kicker">Distribuição</p>
+                  <h2 class="panel-subtitle">Gerar lugares</h2>
+                  <p class="section-body compact-body">O sistema tenta manter cada família confirmada junta na primeira mesa com espaço suficiente.</p>
+                </div>
+              </div>
+
+              <div id="tableDistributionStats" class="admin-summary-grid"></div>
+
+              <div class="form-actions">
+                <button id="generateAssignmentsButton" type="button" class="button button-primary">Gerar distribuição</button>
+              </div>
+
+              <p id="tableGenerationFeedback" class="form-feedback" role="status" aria-live="polite"></p>
+            </div>
+
+            <div class="panel admin-flow-stack">
+              <div class="admin-step-heading">
+                <div>
+                  <p class="section-kicker">Revisão</p>
+                  <h2 class="panel-subtitle">Pendências e ajustes</h2>
+                  <p class="section-body compact-body">Mova a família inteira para uma mesa, sem arrastar pessoas uma por uma.</p>
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label for="seatingSearchInput">Buscar família confirmada</label>
+                <input id="seatingSearchInput" name="seatingSearchInput" type="search" placeholder="Ex.: família Oliveira">
+              </div>
+
+              <div id="seatingFamilyList" class="assignment-list"></div>
+              <p id="seatingFeedback" class="form-feedback" role="status" aria-live="polite"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="admin-flow-panel" data-step-panel="advanced" hidden>
+        <div class="admin-flow-grid admin-flow-grid-main">
+          <div class="panel admin-flow-stack">
+            <div class="admin-step-heading">
+              <div>
+                <p class="section-kicker">Etapa 4</p>
+                <h2 class="panel-subtitle">Presentes</h2>
+                <p class="section-body compact-body">Essa área continua disponível, mas fica fora do fluxo principal de convites e mesas.</p>
               </div>
             </div>
 
             <form id="giftForm" class="form-grid" novalidate>
               <input id="giftId" name="giftId" type="hidden">
-              <div class="field-grid field-grid-2">
-                <div class="field-group">
-                  <label for="giftSortOrder">Ordem de exibição</label>
-                  <input id="giftSortOrder" name="giftSortOrder" type="number" min="0" step="1" placeholder="Ex.: 10">
-                </div>
-                <div class="field-group">
-                  <label for="giftName">Nome do presente</label>
-                  <input id="giftName" name="giftName" type="text" required>
-                </div>
+
+              <div class="field-group">
+                <label for="giftName">Nome do presente</label>
+                <input id="giftName" name="giftName" type="text" required>
               </div>
 
               <div class="field-group">
-                <label for="giftPurchaseUrl">Link para compra</label>
+                <label for="giftPurchaseUrl">Link de compra</label>
                 <input id="giftPurchaseUrl" name="giftPurchaseUrl" type="url" placeholder="https://">
               </div>
 
               <div class="field-group">
                 <label for="giftImageUrl">URL da imagem</label>
                 <input id="giftImageUrl" name="giftImageUrl" type="url" placeholder="https://exemplo.com/imagem.jpg" required>
-              </div>
-
-              <div id="giftImagePreviewShell" class="gift-preview-shell" hidden>
-                <img id="giftImagePreview" src="" alt="Prévia do presente">
               </div>
 
               <label class="toggle-line">
@@ -251,306 +304,156 @@
 
               <div class="form-actions">
                 <button id="giftSubmitButton" type="submit" class="button button-primary">Salvar presente</button>
-                <button id="giftResetButton" type="button" class="button button-secondary button-solid-light">Limpar formulário</button>
+                <button id="giftResetButton" type="button" class="button button-secondary button-solid-light">Novo presente</button>
               </div>
+
               <p id="giftFormFeedback" class="form-feedback" role="status" aria-live="polite"></p>
             </form>
-          </div>
-        </div>
-      </section>
-      <section id="adminTabPanelTables" class="admin-tab-panel" data-tab-panel="tables" hidden>
-        <div class="admin-tab-grid">
-          <div class="panel admin-list-panel">
-            <div class="admin-panel-header">
-              <div>
-                <p class="section-kicker">Mesas</p>
-                <h2 class="panel-title">Mapa das mesas</h2>
-                <p class="section-body compact-body">Acompanhe ocupação, excesso de lotação e convidados que ainda precisam de lugar.</p>
-              </div>
-              <div class="inline-actions">
-                <button id="tableCreateNewButton" type="button" class="button button-secondary button-solid-light">Nova mesa</button>
-              </div>
-            </div>
 
-            <div class="admin-toolbar">
-              <div class="field-group admin-toolbar-search">
-                <label for="tableSearchInput">Buscar por mesa ou convidado</label>
-                <input id="tableSearchInput" name="tableSearchInput" type="search" placeholder="Ex.: mesa jardim, Ana">
-              </div>
-              <div id="tableFilterGroup" class="admin-filter-group" aria-label="Filtros das mesas">
-                <button type="button" class="filter-chip is-active" data-table-filter="all">Todas</button>
-                <button type="button" class="filter-chip" data-table-filter="empty">Vazias</button>
-                <button type="button" class="filter-chip" data-table-filter="partial">Parciais</button>
-                <button type="button" class="filter-chip" data-table-filter="full">Lotadas</button>
-                <button type="button" class="filter-chip" data-table-filter="over">Acima da capacidade</button>
-              </div>
-            </div>
-
-            <p id="tableListSummary" class="admin-toolbar-summary"></p>
-            <div id="tablesBoard" class="table-board"></div>
+            <p id="giftListSummary" class="admin-toolbar-summary"></p>
+            <div id="giftList" class="gift-admin-list"></div>
           </div>
 
-          <div class="panel admin-form-panel">
-            <div class="admin-panel-header">
+          <div class="panel admin-flow-stack">
+            <div class="admin-step-heading">
               <div>
-                <p class="section-kicker">Editor de mesa</p>
-                <h2 id="tableFormTitle" class="panel-title">Nova mesa</h2>
-                <p id="tableFormStatus" class="section-body compact-body">Crie, duplique ou ajuste a lotação antes de salvar.</p>
+                <p class="section-kicker">Configurações</p>
+                <h2 class="panel-subtitle">Conteúdo do site</h2>
+                <p class="section-body compact-body">Edite as informações principais do site sem atrapalhar o fluxo principal do painel.</p>
               </div>
               <div class="inline-actions">
-                <button id="tableDiscardDraftButton" type="button" class="button button-secondary button-solid-light">Descartar rascunho</button>
+                <a id="siteViewLandingButton" class="button button-secondary button-solid-light" href="index.html" target="_blank" rel="noreferrer">Ver landing</a>
+                <button id="siteViewInviteButton" type="button" class="button button-secondary button-solid-light">Ver convite</button>
               </div>
             </div>
 
-            <form id="tableForm" class="form-grid" novalidate>
-              <input id="tableId" name="tableId" type="hidden">
-              <div class="field-grid field-grid-2">
-                <div class="field-group">
-                  <label for="tableSortOrder">Ordem de exibição</label>
-                  <input id="tableSortOrder" name="tableSortOrder" type="number" min="0" step="1" placeholder="Ex.: 10">
+            <form id="siteSettingsForm" class="form-grid" novalidate>
+              <div class="admin-section-block">
+                <div class="admin-step-heading admin-step-heading-tight">
+                  <div>
+                    <h3 class="panel-subtitle">Informações principais</h3>
+                  </div>
                 </div>
-                <div class="field-group">
-                  <label for="tableName">Nome da mesa</label>
-                  <input id="tableName" name="tableName" type="text" required>
+
+                <div class="field-grid field-grid-2">
+                  <div class="field-group">
+                    <label for="settingsCoupleNames">Nome do casal</label>
+                    <input id="settingsCoupleNames" name="settingsCoupleNames" type="text" required>
+                  </div>
+
+                  <div class="field-group">
+                    <label for="settingsMonogram">Monograma</label>
+                    <input id="settingsMonogram" name="settingsMonogram" type="text">
+                  </div>
+                </div>
+
+                <div class="field-grid field-grid-2">
+                  <div class="field-group">
+                    <label for="settingsDateText">Data exibida</label>
+                    <input id="settingsDateText" name="settingsDateText" type="text" required>
+                  </div>
+
+                  <div class="field-group">
+                    <label for="settingsDateTime">Data e horário do evento</label>
+                    <input id="settingsDateTime" name="settingsDateTime" type="datetime-local" required>
+                  </div>
                 </div>
               </div>
 
-              <div class="field-group">
-                <label for="tableCapacity">Capacidade</label>
-                <input id="tableCapacity" name="tableCapacity" type="number" min="1" step="1" required>
+              <div class="admin-section-block">
+                <div class="admin-step-heading admin-step-heading-tight">
+                  <div>
+                    <h3 class="panel-subtitle">Local</h3>
+                  </div>
+                </div>
+
+                <div class="field-grid field-grid-2">
+                  <div class="field-group">
+                    <label for="settingsVenueName">Nome do local</label>
+                    <input id="settingsVenueName" name="settingsVenueName" type="text" required>
+                  </div>
+
+                  <div class="field-group">
+                    <label for="settingsMapsLabel">Texto do botão do mapa</label>
+                    <input id="settingsMapsLabel" name="settingsMapsLabel" type="text" required>
+                  </div>
+                </div>
+
+                <div class="field-group">
+                  <label for="settingsVenueAddress">Endereço completo</label>
+                  <textarea id="settingsVenueAddress" name="settingsVenueAddress" rows="3" required></textarea>
+                </div>
+
+                <div class="field-group">
+                  <label for="settingsMapsUrl">Link do Google Maps</label>
+                  <input id="settingsMapsUrl" name="settingsMapsUrl" type="url" required>
+                </div>
               </div>
 
-              <div class="field-group">
-                <label for="tableNotes">Observações</label>
-                <textarea id="tableNotes" name="tableNotes" rows="3" placeholder="Ex.: perto da pista, convidados com crianças, familiares próximos."></textarea>
+              <div class="admin-section-block">
+                <div class="admin-step-heading admin-step-heading-tight">
+                  <div>
+                    <h3 class="panel-subtitle">Textos da landing</h3>
+                  </div>
+                </div>
+
+                <div class="field-group">
+                  <label for="settingsHeroEyebrow">Texto acima do título</label>
+                  <input id="settingsHeroEyebrow" name="settingsHeroEyebrow" type="text">
+                </div>
+
+                <div class="field-group">
+                  <label for="settingsSubtitle">Subtítulo principal</label>
+                  <textarea id="settingsSubtitle" name="settingsSubtitle" rows="3"></textarea>
+                </div>
+
+                <div class="field-grid field-grid-2">
+                  <div class="field-group">
+                    <label for="settingsIntroKicker">Kicker da apresentação</label>
+                    <input id="settingsIntroKicker" name="settingsIntroKicker" type="text">
+                  </div>
+
+                  <div class="field-group">
+                    <label for="settingsIntroTitle">Título da apresentação</label>
+                    <textarea id="settingsIntroTitle" name="settingsIntroTitle" rows="3"></textarea>
+                  </div>
+                </div>
+
+                <div class="field-group">
+                  <label for="settingsIntroBody">Texto da apresentação</label>
+                  <textarea id="settingsIntroBody" name="settingsIntroBody" rows="5"></textarea>
+                </div>
+
+                <div class="field-grid field-grid-2">
+                  <div class="field-group">
+                    <label for="settingsStoryKicker">Kicker da história</label>
+                    <input id="settingsStoryKicker" name="settingsStoryKicker" type="text">
+                  </div>
+
+                  <div class="field-group">
+                    <label for="settingsStoryTitle">Título da história</label>
+                    <textarea id="settingsStoryTitle" name="settingsStoryTitle" rows="3"></textarea>
+                  </div>
+                </div>
+
+                <div class="field-group">
+                  <label for="settingsStoryBody">Texto da história</label>
+                  <textarea id="settingsStoryBody" name="settingsStoryBody" rows="5"></textarea>
+                </div>
+
+                <label class="toggle-line">
+                  <input id="settingsShowGifts" name="settingsShowGifts" type="checkbox" checked>
+                  <span>Exibir presentes na landing</span>
+                </label>
               </div>
 
               <div class="form-actions">
-                <button id="tableSubmitButton" type="submit" class="button button-primary">Salvar mesa</button>
-                <button id="tableResetButton" type="button" class="button button-secondary button-solid-light">Limpar formulário</button>
+                <button id="siteSettingsSubmitButton" type="submit" class="button button-primary">Salvar informações do site</button>
               </div>
-              <p id="tableFormFeedback" class="form-feedback" role="status" aria-live="polite"></p>
+
+              <p id="siteSettingsFeedback" class="form-feedback" role="status" aria-live="polite"></p>
             </form>
-
-            <div class="panel-subsection">
-              <div class="subsection-header">
-                <div>
-                  <h3 class="panel-subtitle">Confirmados sem mesa</h3>
-                  <p class="section-body compact-body">Resolva primeiro quem já confirmou presença e ainda não foi alocado.</p>
-                </div>
-              </div>
-              <div id="unseatedGuestList" class="assignment-list"></div>
-            </div>
-
-            <div class="panel-subsection">
-              <div class="subsection-header">
-                <div>
-                  <h3 class="panel-subtitle">Alocar convidados confirmados</h3>
-                  <p class="section-body compact-body">Use a busca para encontrar rapidamente alguém e trocar sua mesa.</p>
-                </div>
-              </div>
-
-              <div class="field-group admin-toolbar-search">
-                <label for="seatAssignmentSearchInput">Buscar convidado confirmado</label>
-                <input id="seatAssignmentSearchInput" name="seatAssignmentSearchInput" type="search" placeholder="Ex.: Maria, família Souza">
-              </div>
-
-              <div id="seatAssignmentList" class="assignment-list"></div>
-              <p id="seatAssignmentFeedback" class="form-feedback" role="status" aria-live="polite"></p>
-            </div>
           </div>
-        </div>
-      </section>
-      <section id="adminTabPanelSite" class="admin-tab-panel" data-tab-panel="site" hidden>
-        <div class="panel admin-site-panel">
-          <div class="admin-panel-header">
-            <div>
-              <p class="section-kicker">Conteúdo do site</p>
-              <h2 class="panel-title">Texto e dados principais</h2>
-              <p class="section-body compact-body">Edite os blocos do site por seção, encontre campos rápido e preserve seu rascunho até salvar.</p>
-            </div>
-            <div class="inline-actions">
-              <a id="siteViewLandingButton" class="button button-secondary button-solid-light" href="index.html" target="_blank" rel="noreferrer">Ver landing</a>
-              <button id="siteViewInviteButton" type="button" class="button button-secondary button-solid-light">Ver convite</button>
-              <button id="siteDiscardDraftButton" type="button" class="button button-secondary button-solid-light">Descartar rascunho</button>
-            </div>
-          </div>
-
-          <div class="admin-toolbar admin-toolbar-site">
-            <div class="field-group admin-toolbar-search">
-              <label for="siteSearchInput">Buscar seção, campo ou título</label>
-              <input id="siteSearchInput" name="siteSearchInput" type="search" placeholder="Ex.: data, local, apresentação, história">
-            </div>
-            <div class="admin-filter-group admin-section-nav" aria-label="Navegação interna do site">
-              <button type="button" class="filter-chip is-active" data-site-section-target="siteSectionDate">Data</button>
-              <button type="button" class="filter-chip" data-site-section-target="siteSectionLocation">Local</button>
-              <button type="button" class="filter-chip" data-site-section-target="siteSectionHero">Hero</button>
-              <button type="button" class="filter-chip" data-site-section-target="siteSectionIntro">Apresentação</button>
-              <button type="button" class="filter-chip" data-site-section-target="siteSectionStory">História</button>
-            </div>
-          </div>
-
-          <form id="siteSettingsForm" class="form-grid" novalidate>
-            <section id="siteSectionDate" class="admin-settings-block" data-site-search="data casal nomes monograma data horário evento">
-              <div class="admin-settings-block-header">
-                <div>
-                  <p class="section-kicker">Data</p>
-                  <h3 class="panel-subtitle">Informações principais do casal</h3>
-                </div>
-                <div class="inline-actions">
-                  <span class="section-dirty-indicator" id="siteSectionDateIndicator">Sem alterações</span>
-                  <button type="button" class="button button-secondary button-solid-light button-small" data-restore-section="date">Restaurar seção</button>
-                </div>
-              </div>
-
-              <div class="field-grid field-grid-2">
-                <div class="field-group">
-                  <label for="settingsCoupleNames">Nome do casal</label>
-                  <input id="settingsCoupleNames" name="settingsCoupleNames" type="text" required>
-                </div>
-                <div class="field-group">
-                  <label for="settingsMonogram">Monograma</label>
-                  <input id="settingsMonogram" name="settingsMonogram" type="text">
-                </div>
-              </div>
-
-              <div class="field-grid field-grid-2">
-                <div class="field-group">
-                  <label for="settingsDateText">Data exibida</label>
-                  <input id="settingsDateText" name="settingsDateText" type="text" required>
-                </div>
-                <div class="field-group">
-                  <label for="settingsDateTime">Data e horário do evento</label>
-                  <input id="settingsDateTime" name="settingsDateTime" type="datetime-local" required>
-                </div>
-              </div>
-            </section>
-
-            <section id="siteSectionLocation" class="admin-settings-block" data-site-search="local endereço venue mapa localização">
-              <div class="admin-settings-block-header">
-                <div>
-                  <p class="section-kicker">Local</p>
-                  <h3 class="panel-subtitle">Endereço e link do mapa</h3>
-                </div>
-                <div class="inline-actions">
-                  <span class="section-dirty-indicator" id="siteSectionLocationIndicator">Sem alterações</span>
-                  <button type="button" class="button button-secondary button-solid-light button-small" data-restore-section="location">Restaurar seção</button>
-                </div>
-              </div>
-
-              <div class="field-grid field-grid-2">
-                <div class="field-group">
-                  <label for="settingsVenueName">Nome do local</label>
-                  <input id="settingsVenueName" name="settingsVenueName" type="text" required>
-                </div>
-                <div class="field-group">
-                  <label for="settingsMapsLabel">Texto do botão do mapa</label>
-                  <input id="settingsMapsLabel" name="settingsMapsLabel" type="text" required>
-                </div>
-              </div>
-
-              <div class="field-group">
-                <label for="settingsVenueAddress">Endereço completo</label>
-                <textarea id="settingsVenueAddress" name="settingsVenueAddress" rows="3" required></textarea>
-              </div>
-
-              <div class="field-group">
-                <label for="settingsMapsUrl">Link do Google Maps</label>
-                <input id="settingsMapsUrl" name="settingsMapsUrl" type="url" required>
-              </div>
-            </section>
-
-            <section id="siteSectionHero" class="admin-settings-block" data-site-search="hero destaque abertura subtítulo save the date presentes">
-              <div class="admin-settings-block-header">
-                <div>
-                  <p class="section-kicker">Hero</p>
-                  <h3 class="panel-subtitle">Mensagem de abertura</h3>
-                </div>
-                <div class="inline-actions">
-                  <span class="section-dirty-indicator" id="siteSectionHeroIndicator">Sem alterações</span>
-                  <button type="button" class="button button-secondary button-solid-light button-small" data-restore-section="hero">Restaurar seção</button>
-                </div>
-              </div>
-
-              <div class="field-group">
-                <label for="settingsHeroEyebrow">Texto acima do título</label>
-                <input id="settingsHeroEyebrow" name="settingsHeroEyebrow" type="text">
-              </div>
-
-              <div class="field-group">
-                <label for="settingsSubtitle">Subtítulo principal</label>
-                <textarea id="settingsSubtitle" name="settingsSubtitle" rows="3"></textarea>
-              </div>
-
-              <label class="toggle-line">
-                <input id="settingsShowGifts" name="settingsShowGifts" type="checkbox" checked>
-                <span>Exibir lista de presentes na landing page</span>
-              </label>
-            </section>
-
-            <section id="siteSectionIntro" class="admin-settings-block" data-site-search="apresentação introdução intro texto título kicker">
-              <div class="admin-settings-block-header">
-                <div>
-                  <p class="section-kicker">Apresentação</p>
-                  <h3 class="panel-subtitle">Bloco inicial do site</h3>
-                </div>
-                <div class="inline-actions">
-                  <span class="section-dirty-indicator" id="siteSectionIntroIndicator">Sem alterações</span>
-                  <button type="button" class="button button-secondary button-solid-light button-small" data-restore-section="intro">Restaurar seção</button>
-                </div>
-              </div>
-
-              <div class="field-grid field-grid-2">
-                <div class="field-group">
-                  <label for="settingsIntroKicker">Kicker da apresentação</label>
-                  <input id="settingsIntroKicker" name="settingsIntroKicker" type="text">
-                </div>
-                <div class="field-group">
-                  <label for="settingsIntroTitle">Título da apresentação</label>
-                  <textarea id="settingsIntroTitle" name="settingsIntroTitle" rows="3"></textarea>
-                </div>
-              </div>
-
-              <div class="field-group">
-                <label for="settingsIntroBody">Texto da apresentação</label>
-                <textarea id="settingsIntroBody" name="settingsIntroBody" rows="5"></textarea>
-              </div>
-            </section>
-
-            <section id="siteSectionStory" class="admin-settings-block" data-site-search="história mensagem story texto título kicker">
-              <div class="admin-settings-block-header">
-                <div>
-                  <p class="section-kicker">História</p>
-                  <h3 class="panel-subtitle">Bloco de história e mensagem</h3>
-                </div>
-                <div class="inline-actions">
-                  <span class="section-dirty-indicator" id="siteSectionStoryIndicator">Sem alterações</span>
-                  <button type="button" class="button button-secondary button-solid-light button-small" data-restore-section="story">Restaurar seção</button>
-                </div>
-              </div>
-
-              <div class="field-grid field-grid-2">
-                <div class="field-group">
-                  <label for="settingsStoryKicker">Kicker da história</label>
-                  <input id="settingsStoryKicker" name="settingsStoryKicker" type="text">
-                </div>
-                <div class="field-group">
-                  <label for="settingsStoryTitle">Título da história</label>
-                  <textarea id="settingsStoryTitle" name="settingsStoryTitle" rows="3"></textarea>
-                </div>
-              </div>
-
-              <div class="field-group">
-                <label for="settingsStoryBody">Texto da história</label>
-                <textarea id="settingsStoryBody" name="settingsStoryBody" rows="5"></textarea>
-              </div>
-            </section>
-
-            <div class="form-actions">
-              <button id="siteSettingsSubmitButton" type="submit" class="button button-primary">Salvar informações do site</button>
-            </div>
-            <p id="siteSettingsFeedback" class="form-feedback" role="status" aria-live="polite"></p>
-          </form>
         </div>
       </section>
     </section>

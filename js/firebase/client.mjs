@@ -299,6 +299,48 @@ export async function assignGuestToTable(familyId, guestId, tableId) {
   }, { merge: true });
 }
 
+export async function saveGuestTableAssignments(changes) {
+  const normalizedChanges = Array.isArray(changes)
+    ? changes
+        .map((change) => ({
+          familyId: String(change?.familyId || "").trim(),
+          guestId: String(change?.guestId || "").trim(),
+          tableId: String(change?.tableId || "").trim()
+        }))
+        .filter((change) => change.familyId && change.guestId)
+    : [];
+
+  if (!normalizedChanges.length) {
+    return;
+  }
+
+  const db = getDb();
+  const chunkSize = 180;
+
+  for (let index = 0; index < normalizedChanges.length; index += chunkSize) {
+    const chunk = normalizedChanges.slice(index, index + chunkSize);
+    const batch = db.batch();
+    const familiesTouched = new Set();
+
+    chunk.forEach((change) => {
+      const guestRef = db.collection("families").doc(change.familyId).collection("guests").doc(change.guestId);
+      batch.set(guestRef, {
+        tableId: change.tableId,
+        updatedAt: getServerTimestamp()
+      }, { merge: true });
+      familiesTouched.add(change.familyId);
+    });
+
+    familiesTouched.forEach((familyId) => {
+      batch.set(db.collection("families").doc(familyId), {
+        updatedAt: getServerTimestamp()
+      }, { merge: true });
+    });
+
+    await batch.commit();
+  }
+}
+
 export function subscribeTables(callback, errorCallback) {
   return getDb().collection("tables").onSnapshot((snapshot) => {
     callback(sortBySortOrder(snapshot.docs.map(mapDoc)));
