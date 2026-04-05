@@ -24,6 +24,7 @@ import {
   setText,
   setupRevealAnimations,
   slugify,
+  generateReadableInviteSlug,
   summarizeGuests,
   toDateTimeLocalValue,
   localDateTimeToIso
@@ -87,7 +88,8 @@ const dom = {
   familyName: $("#familyName"),
   displayName: $("#displayName"),
   customMessage: $("#customMessage"),
-  familyGuestsText: $("#familyGuestsText"),
+  familyGuestsContainer: $("#familyGuestsContainer"),
+  addGuestButton: $("#addGuestButton"),
   isActive: $("#isActive"),
   familyToggleSlugButton: $("#familyToggleSlugButton"),
   familySlugEditor: $("#familySlugEditor"),
@@ -440,6 +442,23 @@ function setFamilySlugEditorVisible(isVisible) {
   setText(dom.familyToggleSlugButton, isVisible ? "Ocultar edição do link" : "Editar link");
 }
 
+function addGuestInputLine(initialValue = "") {
+  if (!dom.familyGuestsContainer) return;
+  const wrapper = createElement("div", "admin-guest-input-line");
+  const input = createElement("input", "");
+  input.type = "text";
+  input.placeholder = "Ex.: João Silva";
+  input.value = initialValue;
+  
+  const removeBtn = createElement("button", "button button-small button-light-outline", "Remover");
+  removeBtn.type = "button";
+  removeBtn.onclick = () => wrapper.remove();
+  
+  wrapper.appendChild(input);
+  wrapper.appendChild(removeBtn);
+  dom.familyGuestsContainer.appendChild(wrapper);
+}
+
 function syncFamilyFormMode() {
   const isEditing = Boolean(normalizeString(dom.familyId.value));
   setText(dom.familyFormTitle, isEditing ? "Editar convite" : "Novo convite");
@@ -467,9 +486,8 @@ function syncFamilyLinkPreview() {
 }
 
 function readGuestNames() {
-  return normalizeString(dom.familyGuestsText.value)
-    .split(/\r?\n/)
-    .map((name) => normalizeString(name))
+  return Array.from(dom.familyGuestsContainer.querySelectorAll("input"))
+    .map((input) => normalizeString(input.value))
     .filter(Boolean);
 }
 
@@ -547,7 +565,15 @@ function fillFamilyForm(family) {
   dom.familyName.value = family?.familyName || "";
   dom.displayName.value = family?.displayName || "";
   dom.customMessage.value = family?.customMessage || "";
-  dom.familyGuestsText.value = (family?.guests || []).map((guest) => guest.name).join("\n");
+  
+  dom.familyGuestsContainer.innerHTML = "";
+  const guests = family?.guests || [];
+  if (guests.length === 0) {
+    addGuestInputLine("");
+  } else {
+    guests.forEach((guest) => addGuestInputLine(guest.name));
+  }
+
   dom.isActive.checked = family?.isActive !== false;
   dom.familySlug.value = family?.slug || "";
   state.lastSavedInviteUrl = family?.slug ? inviteUrl(family.slug) : "";
@@ -584,9 +610,15 @@ async function handleFamilySave(event) {
   const displayName = normalizeString(dom.displayName.value);
   const guestNames = readGuestNames();
   const existingFamily = familyById(normalizeString(dom.familyId.value));
-  const slug = slugify(
-    normalizeString(dom.familySlug.value) || existingFamily?.slug || familyName || displayName
-  );
+  let slug = "";
+  const inputSlug = normalizeString(dom.familySlug.value);
+  if (inputSlug) {
+    slug = slugify(inputSlug);
+  } else if (existingFamily?.slug) {
+    slug = existingFamily.slug;
+  } else {
+    slug = generateReadableInviteSlug(familyName || displayName);
+  }
 
   if (!familyName || !displayName) {
     setFeedback(dom.familyFormFeedback, "error", "Preencha o nome da família e o nome exibido.");
@@ -1580,7 +1612,8 @@ function initialize() {
   [dom.familyName, dom.displayName, dom.familySlug].forEach((field) => {
     field.addEventListener("input", syncFamilyLinkPreview);
   });
-  dom.familyGuestsText.addEventListener("input", renderFamilyRemovalHint);
+  dom.addGuestButton?.addEventListener("click", () => addGuestInputLine(""));
+  dom.familyGuestsContainer?.addEventListener("input", renderFamilyRemovalHint);
   dom.familyCopyLinkButton.addEventListener("click", async () => {
     if (!state.lastSavedInviteUrl) {
       return;

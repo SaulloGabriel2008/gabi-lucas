@@ -1594,3 +1594,161 @@ button {
     align-items: start;
   }
 }
+
+/* --- ADMIN PANEL PREMIUM DARK MODE REVAMP --- */
+.admin-body {
+  background: linear-gradient(135deg, #1a1b18 0%, #282a25 100%);
+  color: #ebeae6;
+}
+
+.admin-body .panel {
+  background: rgba(30, 32, 28, 0.65);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  color: #ebeae6;
+  border-radius: var(--radius-lg);
+  transition: transform var(--transition-soft), background-color var(--transition-soft), box-shadow var(--transition-soft);
+}
+
+.admin-body .panel:hover {
+  background: rgba(36, 38, 33, 0.7);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
+}
+
+.admin-body input,
+.admin-body textarea {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-radius: var(--radius-sm);
+}
+
+.admin-body input:focus,
+.admin-body textarea:focus {
+  background: rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+}
+
+.admin-body .button-primary {
+  background: var(--color-olive);
+  color: #fff;
+  border: 1px solid rgba(255,255,255, 0.1);
+}
+
+.admin-body .button-primary:hover {
+  background: #566149;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(73, 82, 61, 0.3);
+}
+
+.admin-body .section-kicker,
+.admin-body .section-kicker-light {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.admin-guests-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.admin-guest-input-line {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  animation: guestLineFadeIn 0.3s ease;
+}
+
+@keyframes guestLineFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.admin-guest-input-line input {
+  flex: 1;
+}
+
+.admin-body label,
+.admin-body legend {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.admin-body .family-stat,
+.admin-body .choice-pill {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.admin-body .family-link-box {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #c9e6ad;
+}
+
+.admin-body .form-feedback.is-success {
+  color: #c9e6ad;
+}
+
+.admin-body .section-body {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.admin-body .family-stat span,
+.admin-body .family-link-label {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.admin-body .admin-inline-hint {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.admin-body .admin-flow-step.is-active {
+  background: var(--color-olive);
+  border-color: rgba(255,255,255,0.15);
+  color: #fff;
+}
+
+.admin-body ::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.admin-body .button-solid-light,
+.admin-body .button-secondary,
+.admin-body .button-small.button-solid-light {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--color-deep);
+  border-color: transparent;
+}
+
+.admin-body .button-solid-light:hover,
+.admin-body .button-secondary:hover {
+  background: #fff;
+}
+
+.admin-body .empty-state-card {
+  background: rgba(237, 235, 230, 0.95);
+  color: var(--color-deep);
+}
+
+.admin-body .admin-inline-hint b,
+.admin-body .admin-inline-hint strong {
+  color: #fff;
+}
+
+.admin-body .form-feedback.is-error {
+  color: #ff9b85;
+}
+
+.admin-body .button-light-outline {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+.admin-body .button-light-outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+

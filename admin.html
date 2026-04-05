@@ -114,9 +114,12 @@
                 <textarea id="customMessage" name="customMessage" rows="4" placeholder="Escreva uma mensagem carinhosa para esta família."></textarea>
               </div>
 
-              <div class="field-group">
-                <label for="familyGuestsText">Convidados</label>
-                <textarea id="familyGuestsText" name="familyGuestsText" rows="8" placeholder="Um nome por linha&#10;Ana Silva&#10;Lucas Pereira&#10;Dona Maria" required></textarea>
+              <div class="field-group admin-guests-group">
+                <div class="admin-guests-header">
+                  <label>Convidados</label>
+                  <button id="addGuestButton" type="button" class="button button-small button-secondary button-solid-light">+ Adicionar</button>
+                </div>
+                <div id="familyGuestsContainer" class="family-guests-dynamic-list"></div>
               </div>
 
               <label class="toggle-line">
