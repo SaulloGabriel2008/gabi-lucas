@@ -82,6 +82,10 @@ const dom = {
   stepPanels: $$("[data-step-panel]"),
   familySearchInput: $("#familySearchInput"),
   familyListSummary: $("#familyListSummary"),
+  familyCarousel: $("#familyCarousel"),
+  familyCarouselPrev: $("#familyCarouselPrev"),
+  familyCarouselNext: $("#familyCarouselNext"),
+  familyListViewport: $("#familyListViewport"),
   familyList: $("#familyList"),
   familyFormTitle: $("#familyFormTitle"),
   familyFormStatus: $("#familyFormStatus"),
@@ -106,6 +110,10 @@ const dom = {
   familyCopyLinkButton: $("#familyCopyLinkButton"),
   confirmationsSearchInput: $("#confirmationsSearchInput"),
   confirmationsListSummary: $("#confirmationsListSummary"),
+  confirmationsCarousel: $("#confirmationsCarousel"),
+  confirmationsCarouselPrev: $("#confirmationsCarouselPrev"),
+  confirmationsCarouselNext: $("#confirmationsCarouselNext"),
+  confirmationsListViewport: $("#confirmationsListViewport"),
   confirmationsList: $("#confirmationsList"),
   tableForm: $("#tableForm"),
   tableId: $("#tableId"),
@@ -173,6 +181,9 @@ const state = {
   unsubscribeTables: null
 };
 
+const CAROUSEL_SCROLL_TOLERANCE = 10;
+const cardCarousels = [];
+
 function buildRuntimeConfig(override) {
   const merged = mergeDeep(defaultSiteConfig, override || {});
   if (!merged.features) {
@@ -202,6 +213,7 @@ function emptyState(message) {
 
 function setFeedback(element, type, message) {
   if (!element) {
+    refreshCardCarousels();
     return;
   }
   element.textContent = message || "";
@@ -266,10 +278,22 @@ function showLoggedOutState(message = "", diagnostic = null) {
 }
 
 function showLoggedInState() {
+  setFeedback(dom.adminLoginFeedback, "success", "Login feito com sucesso.");
+  clearLoginDiagnostic();
+}
+
+function revealAdminDashboard() {
   dom.adminLoginSection.hidden = true;
   dom.adminDashboardSection.hidden = false;
   setFeedback(dom.adminLoginFeedback, "", "");
-  clearLoginDiagnostic();
+}
+
+function wait(milliseconds) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, milliseconds);
+  });
+
+  refreshCardCarousels();
 }
 
 function setLoginBusy(isBusy) {
@@ -295,17 +319,20 @@ function getAdminLoginErrorMessage(error) {
     return defaultSiteConfig.adminSite.login.errorMessage;
   }
   if (error.code === "auth/invalid-email") {
-    return "Informe um e-mail válido para continuar.";
+    return "Email ou senha estao errados.";
   }
   if (
     error.code === "auth/wrong-password"
     || error.code === "auth/invalid-credential"
     || error.code === "auth/invalid-login-credentials"
   ) {
-    return "A senha informada está incorreta.";
+    return "Email ou senha estao errados.";
   }
   if (error.code === "auth/user-not-found") {
-    return "Esse usuário ainda não foi criado no Firebase Authentication.";
+    return "Email ou senha estao errados.";
+  }
+  if (error.code === "auth/too-many-requests") {
+    return "Email ou senha estao errados.";
   }
   return defaultSiteConfig.adminSite.login.errorMessage;
 }
@@ -822,6 +849,61 @@ function familyStats(items) {
   return shell;
 }
 
+function updateCarouselControls(config) {
+  const { shell, viewport, track, prevButton, nextButton } = config;
+
+  if (!viewport || !track || !prevButton || !nextButton) {
+    return;
+  }
+
+  const cardCount = track.querySelectorAll(".family-card").length;
+  const maxScroll = Math.max(viewport.scrollWidth - viewport.clientWidth, 0);
+  const hasOverflow = cardCount > 1 && maxScroll > CAROUSEL_SCROLL_TOLERANCE;
+
+  if (viewport.scrollLeft > maxScroll) {
+    viewport.scrollLeft = maxScroll;
+  }
+
+  shell?.classList.toggle("is-static", !hasOverflow);
+  prevButton.disabled = !hasOverflow || viewport.scrollLeft <= CAROUSEL_SCROLL_TOLERANCE;
+  nextButton.disabled = !hasOverflow || viewport.scrollLeft >= maxScroll - CAROUSEL_SCROLL_TOLERANCE;
+}
+
+function scrollCarousel(viewport, direction) {
+  if (!viewport) {
+    return;
+  }
+
+  viewport.scrollBy({
+    left: direction * viewport.clientWidth,
+    behavior: "smooth"
+  });
+}
+
+function registerCarousel(shell, viewport, track, prevButton, nextButton) {
+  if (!shell || !viewport || !track || !prevButton || !nextButton) {
+    return;
+  }
+
+  const config = { shell, viewport, track, prevButton, nextButton };
+  const refresh = () => {
+    window.requestAnimationFrame(() => updateCarouselControls(config));
+  };
+
+  viewport.addEventListener("scroll", refresh, { passive: true });
+  window.addEventListener("resize", refresh);
+  prevButton.addEventListener("click", () => scrollCarousel(viewport, -1));
+  nextButton.addEventListener("click", () => scrollCarousel(viewport, 1));
+
+  config.refresh = refresh;
+  cardCarousels.push(config);
+  refresh();
+}
+
+function refreshCardCarousels() {
+  cardCarousels.forEach((config) => config.refresh?.());
+}
+
 function renderFamilyCard(family, options = {}) {
   const summary = summarizeGuests(family.guests || []);
   const badge = familyBadge(family);
@@ -913,12 +995,15 @@ function renderFamilies() {
 
   if (!families.length) {
     dom.familyList.appendChild(emptyState("Nenhum convite combina com a busca atual."));
+    refreshCardCarousels();
     return;
   }
 
   families.forEach((family) => {
     dom.familyList.appendChild(renderFamilyCard(family));
   });
+
+  refreshCardCarousels();
 }
 
 function renderConfirmations() {
@@ -1728,6 +1813,8 @@ async function syncAdminState(user) {
       lookup
     });
     showLoggedInState();
+    await wait(900);
+    revealAdminDashboard();
     await loadRemoteSiteSettings();
     startSubscriptions();
     renderAll();

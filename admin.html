@@ -83,7 +83,29 @@
             </div>
 
             <p id="familyListSummary" class="admin-toolbar-summary"></p>
-            <div id="familyList" class="admin-simple-list"></div>
+            <div id="familyCarousel" class="admin-card-carousel">
+              <div class="admin-card-carousel-controls" aria-label="Navegação da lista de convites">
+                <button
+                  id="familyCarouselPrev"
+                  type="button"
+                  class="admin-card-carousel-button"
+                  aria-label="Ver convites anteriores"
+                >
+                  ‹
+                </button>
+                <button
+                  id="familyCarouselNext"
+                  type="button"
+                  class="admin-card-carousel-button"
+                  aria-label="Ver próximos convites"
+                >
+                  ›
+                </button>
+              </div>
+              <div id="familyListViewport" class="admin-card-carousel-viewport">
+                <div id="familyList" class="admin-simple-list admin-card-carousel-track"></div>
+              </div>
+            </div>
           </div>
 
           <div class="panel admin-flow-form-panel">
@@ -178,7 +200,29 @@
           </div>
 
           <p id="confirmationsListSummary" class="admin-toolbar-summary"></p>
-          <div id="confirmationsList" class="admin-simple-list"></div>
+          <div id="confirmationsCarousel" class="admin-card-carousel">
+            <div class="admin-card-carousel-controls" aria-label="Navegação da lista de confirmações">
+              <button
+                id="confirmationsCarouselPrev"
+                type="button"
+                class="admin-card-carousel-button"
+                aria-label="Ver confirmações anteriores"
+              >
+                ‹
+              </button>
+              <button
+                id="confirmationsCarouselNext"
+                type="button"
+                class="admin-card-carousel-button"
+                aria-label="Ver próximas confirmações"
+              >
+                ›
+              </button>
+            </div>
+            <div id="confirmationsListViewport" class="admin-card-carousel-viewport">
+              <div id="confirmationsList" class="admin-simple-list admin-card-carousel-track"></div>
+            </div>
+          </div>
         </div>
       </section>
 
