@@ -19,12 +19,17 @@ const dom = {
   inviteHeroTitle: document.querySelector("#inviteHeroTitle"),
   inviteHeroSubtitle: document.querySelector("#inviteHeroSubtitle"),
   inviteFamilyTitle: document.querySelector("#inviteFamilyTitle"),
+  inviteIntroLead: document.querySelector("#inviteIntroLead"),
   inviteCustomMessage: document.querySelector("#inviteCustomMessage"),
+  inviteNameList: document.querySelector("#inviteNameList"),
   inviteReservedSeats: document.querySelector("#inviteReservedSeats"),
   inviteStatusText: document.querySelector("#inviteStatusText"),
+  inviteResponseSummary: document.querySelector("#inviteResponseSummary"),
   inviteRsvpTitle: document.querySelector("#inviteRsvpTitle"),
   inviteRsvpBody: document.querySelector("#inviteRsvpBody"),
   inviteGuestList: document.querySelector("#inviteGuestList"),
+  inviteConfirmAllButton: document.querySelector("#inviteConfirmAllButton"),
+  inviteDeclineAllButton: document.querySelector("#inviteDeclineAllButton"),
   inviteNoteLabel: document.querySelector("#inviteNoteLabel"),
   inviteNote: document.querySelector("#inviteNote"),
   inviteSubmitButton: document.querySelector("#inviteSubmitButton"),
@@ -40,11 +45,13 @@ const dom = {
   inviteMinutesValue: document.querySelector("#inviteMinutesValue"),
   inviteSecondsValue: document.querySelector("#inviteSecondsValue"),
   inviteSuccessModal: document.querySelector("#inviteSuccessModal"),
-  inviteSuccessClose: document.querySelector("#inviteSuccessClose")
+  inviteSuccessClose: document.querySelector("#inviteSuccessClose"),
+  inviteSuccessBody: document.querySelector("#inviteSuccessBody")
 };
 
 let currentInvite = null;
 let runtimeConfig = buildRuntimeConfig();
+let draftResponses = {};
 
 function buildRuntimeConfig(settings) {
   const merged = mergeDeep(defaultSiteConfig, settings || {});
@@ -73,6 +80,40 @@ function setFeedback(type, message) {
   }
 }
 
+function guestSummary(invite) {
+  return (invite?.guests || []).reduce((summary, guest) => {
+    if (guest.responseStatus === "confirmed") {
+      summary.confirmed += 1;
+    } else if (guest.responseStatus === "declined") {
+      summary.declined += 1;
+    } else {
+      summary.pending += 1;
+    }
+
+    return summary;
+  }, { confirmed: 0, declined: 0, pending: 0 });
+}
+
+function draftGuestSummary(invite) {
+  return (invite?.guests || []).reduce((summary, guest) => {
+    const status = selectedOrCurrentStatus(guest);
+
+    if (status === "confirmed") {
+      summary.confirmed += 1;
+    } else if (status === "declined") {
+      summary.declined += 1;
+    } else {
+      summary.pending += 1;
+    }
+
+    return summary;
+  }, { confirmed: 0, declined: 0, pending: 0 });
+}
+
+function inviteLeadText(invite) {
+  return `Estamos convidando voce e sua familia para celebrar o nosso casamento com a gente. Abaixo estao os nomes reservados neste convite.`;
+}
+
 function getInviteSlug() {
   return new URL(window.location.href).searchParams.get("slug") || "";
 }
@@ -94,6 +135,35 @@ function hydrateSharedContent() {
   setText(dom.inviteMapsLink, runtimeConfig.event.mapsLabel);
 }
 
+function updateGuestCardState(card, status) {
+  card.classList.remove("is-pending", "is-confirmed", "is-declined");
+  if (status === "confirmed") {
+    card.classList.add("is-confirmed");
+    return;
+  }
+  if (status === "declined") {
+    card.classList.add("is-declined");
+    return;
+  }
+  card.classList.add("is-pending");
+}
+
+function updateSummaryUI(invite, useDraft = false) {
+  const summary = useDraft ? draftGuestSummary(invite) : guestSummary(invite);
+  setText(dom.inviteResponseSummary, `${summary.confirmed} confirmados, ${summary.declined} nao vao e ${summary.pending} pendentes`);
+}
+
+function renderInvitedNames(invite) {
+  dom.inviteNameList.innerHTML = "";
+  (invite.guests || []).forEach((guest) => {
+    dom.inviteNameList.appendChild(createElement("span", "invite-name-pill", guest.name));
+  });
+}
+
+function selectedOrCurrentStatus(guest) {
+  return draftResponses[guest.id] || guest.responseStatus || "pending";
+}
+
 function renderGuestChoices(invite) {
   dom.inviteGuestList.innerHTML = "";
 
@@ -108,13 +178,14 @@ function renderGuestChoices(invite) {
 
   invite.guests.forEach((guest) => {
     const card = createElement("article", "invite-guest-card");
+    updateGuestCardState(card, selectedOrCurrentStatus(guest));
     const title = createElement("h4", "invite-guest-name", guest.name);
-    const status = createElement("p", "section-body compact-body", `Status atual: ${formatGuestStatus(guest.responseStatus)}`);
+    const status = createElement("p", "section-body compact-body invite-guest-status", `Status atual: ${formatGuestStatus(selectedOrCurrentStatus(guest))}`);
     const choices = createElement("div", "invite-choice-row");
 
     [
-      { value: "confirmed", label: "Confirmar presença" },
-      { value: "declined", label: "Não poderá comparecer" }
+      { value: "confirmed", label: "Vai" },
+      { value: "declined", label: "Nao vai" }
     ].forEach((option) => {
       const choice = createElement("label", "choice-pill");
       const input = createElement("input");
@@ -122,8 +193,13 @@ function renderGuestChoices(invite) {
       input.type = "radio";
       input.name = `attendance_${guest.id}`;
       input.value = option.value;
-      input.required = true;
-      input.checked = guest.responseStatus === option.value;
+      input.checked = selectedOrCurrentStatus(guest) === option.value;
+      input.addEventListener("change", () => {
+        draftResponses[guest.id] = option.value;
+        status.textContent = `Status atual: ${formatGuestStatus(option.value)}`;
+        updateGuestCardState(card, option.value);
+        updateSummaryUI(invite, true);
+      });
       choice.append(input, span);
       choices.appendChild(choice);
     });
@@ -135,13 +211,17 @@ function renderGuestChoices(invite) {
 
 function renderInvite(invite) {
   currentInvite = invite;
+  draftResponses = Object.fromEntries((invite.guests || []).map((guest) => [guest.id, guest.responseStatus || "pending"]));
   const summary = summarizeGuests(invite.guests || []);
 
   document.title = `${invite.displayName} | Convite | ${runtimeConfig.couple.names}`;
   setText(dom.inviteFamilyTitle, invite.displayName);
-  setText(dom.inviteCustomMessage, invite.customMessage || "Preparamos esse convite com carinho para a sua família.");
+  setText(dom.inviteIntroLead, inviteLeadText(invite));
+  setText(dom.inviteCustomMessage, invite.customMessage || "Preparamos esse convite com carinho para sua familia e vamos amar celebrar esse momento com voces.");
   setText(dom.inviteReservedSeats, String(summary.invitedCount));
   setText(dom.inviteStatusText, formatInviteStatus(summary.responseStatus));
+  renderInvitedNames(invite);
+  updateSummaryUI(invite, true);
   dom.inviteNote.value = invite.attendanceNote || "";
   renderGuestChoices(invite);
 }
@@ -182,6 +262,28 @@ function closeSuccessModal() {
 }
 
 function setupInviteForm() {
+  dom.inviteConfirmAllButton.addEventListener("click", () => {
+    if (!currentInvite) {
+      return;
+    }
+    currentInvite.guests.forEach((guest) => {
+      draftResponses[guest.id] = "confirmed";
+    });
+    renderGuestChoices(currentInvite);
+    updateSummaryUI(currentInvite, true);
+  });
+
+  dom.inviteDeclineAllButton.addEventListener("click", () => {
+    if (!currentInvite) {
+      return;
+    }
+    currentInvite.guests.forEach((guest) => {
+      draftResponses[guest.id] = "declined";
+    });
+    renderGuestChoices(currentInvite);
+    updateSummaryUI(currentInvite, true);
+  });
+
   dom.inviteRsvpForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
@@ -197,14 +299,18 @@ function setupInviteForm() {
       const responseStatus = String(formData.get(`attendance_${guest.id}`) || "").trim();
 
       if (!responseStatus) {
-        setFeedback("error", "Selecione a presença de todas as pessoas listadas no convite.");
-        return;
+        continue;
       }
 
       guestsPayload.push({
         id: guest.id,
         responseStatus
       });
+    }
+
+    if (!guestsPayload.length) {
+      setFeedback("error", runtimeConfig.inviteSite.messages.chooseSomeone);
+      return;
     }
 
     dom.inviteSubmitButton.disabled = true;
@@ -227,7 +333,17 @@ function setupInviteForm() {
       });
       currentInvite.attendanceNote = String(dom.inviteNote.value || "").trim();
       renderInvite(currentInvite);
-      setFeedback("success", runtimeConfig.inviteSite.messages.success);
+      const pendingCount = guestSummary(currentInvite).pending;
+      setFeedback(
+        "success",
+        pendingCount > 0 ? runtimeConfig.inviteSite.messages.partialSuccess : runtimeConfig.inviteSite.messages.success
+      );
+      setText(
+        dom.inviteSuccessBody,
+        pendingCount > 0
+          ? "Registramos as respostas marcadas. Se quiser, voce pode voltar depois para concluir os nomes que ainda ficaram pendentes."
+          : "Registramos todas as respostas deste convite. Se quiser, voce pode continuar navegando pelo site principal para ver mais detalhes da celebracao."
+      );
       openSuccessModal();
     } catch (error) {
       setFeedback("error", "Não foi possível registrar sua resposta agora. Tente novamente.");

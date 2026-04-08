@@ -35,7 +35,12 @@
         <div class="panel-copy reveal">
           <p class="section-kicker">Convite da familia</p>
           <h2 id="inviteFamilyTitle" class="section-title"></h2>
+          <p id="inviteIntroLead" class="section-body invite-lead"></p>
           <p id="inviteCustomMessage" class="section-body"></p>
+          <div class="invite-name-panel">
+            <span class="invite-name-label">Nomes convidados</span>
+            <div id="inviteNameList" class="invite-name-list"></div>
+          </div>
           <div class="invite-meta">
             <div class="invite-meta-item">
               <span class="invite-meta-label">Convidados</span>
@@ -45,6 +50,10 @@
               <span class="invite-meta-label">Status atual</span>
               <strong id="inviteStatusText"></strong>
             </div>
+            <div class="invite-meta-item">
+              <span class="invite-meta-label">Resumo</span>
+              <strong id="inviteResponseSummary"></strong>
+            </div>
           </div>
         </div>
 
@@ -52,6 +61,10 @@
           <h3 id="inviteRsvpTitle" class="panel-title"></h3>
           <p id="inviteRsvpBody" class="section-body"></p>
           <form id="inviteRsvpForm" class="form-grid" novalidate>
+            <div class="invite-bulk-actions">
+              <button id="inviteConfirmAllButton" type="button" class="button button-primary">Confirmar todos</button>
+              <button id="inviteDeclineAllButton" type="button" class="button button-secondary button-solid-light">Não poderão ir</button>
+            </div>
             <div id="inviteGuestList" class="invite-guest-list"></div>
             <div class="field-group">
               <label id="inviteNoteLabel" for="inviteNote"></label>
@@ -117,7 +130,7 @@
       <button id="inviteSuccessClose" type="button" class="modal-close" aria-label="Fechar popup">x</button>
       <p class="section-kicker">Resposta registrada</p>
       <h2 id="inviteSuccessTitle" class="panel-title">Obrigada por confirmar sua resposta.</h2>
-      <p class="section-body">Se quiser, voce pode continuar navegando pelo site principal para ver mais detalhes da celebracao.</p>
+      <p id="inviteSuccessBody" class="section-body">Se quiser, voce pode continuar navegando pelo site principal para ver mais detalhes da celebracao.</p>
       <div class="form-actions">
         <a id="inviteSuccessLink" class="button button-primary" href="index.html">Ir para a landing page</a>
       </div>

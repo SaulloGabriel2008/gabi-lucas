@@ -240,14 +240,16 @@ export const defaultSiteConfig = {
     eyebrow: "Convite personalizado",
     title: "Uma celebração pensada para ser vivida com pessoas especiais.",
     intro: "Esta página será preenchida com o nome e a mensagem dedicados a cada família convidada.",
-    rsvpTitle: "Confirme a presença de cada pessoa da sua família.",
-    rsvpBody: "Escolha, para cada convidado, se ele poderá estar presente no casamento.",
+    rsvpTitle: "Queremos celebrar esse dia com vocês.",
+    rsvpBody: "Marque quem poderá estar conosco. Se preferir, use os atalhos para confirmar ou recusar todos e ajuste os nomes individualmente depois.",
     fields: {
       noteLabel: "Mensagem opcional",
       submitLabel: "Confirmar resposta"
     },
     messages: {
-      success: "Resposta registrada com sucesso. Obrigado por confirmar.",
+      success: "Resposta registrada com sucesso.",
+      partialSuccess: "Resposta registrada. Os nomes sem marcação continuam pendentes e podem ser confirmados depois.",
+      chooseSomeone: "Selecione pelo menos uma resposta antes de enviar.",
       missingInvite: "Não foi possível localizar esse convite. Verifique o link enviado.",
       loadError: "Não foi possível carregar os dados do convite neste momento."
     }
