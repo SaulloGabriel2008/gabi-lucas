@@ -1,5 +1,6 @@
 import { defaultSiteConfig } from "../config/site-config.mjs";
 import {
+  deleteFamily,
   deleteGiftItem,
   deleteTable,
   loadAdminProfile,
@@ -38,7 +39,7 @@ const STEP_ORDER = ["families", "confirmations", "tables", "advanced"];
 const STEP_INFO = {
   families: {
     index: 1,
-    description: "Cadastre as famílias com poucos campos, gere o link automaticamente e copie quando salvar.",
+    description: "Cadastre as famÃƒÆ’Ã‚Â­lias com poucos campos, gere o link automaticamente e copie quando salvar.",
     primaryLabel: "Novo convite"
   },
   confirmations: {
@@ -48,12 +49,12 @@ const STEP_INFO = {
   },
   tables: {
     index: 3,
-    description: "Cadastre as mesas, gere a distribuição automática e revise só as pendências.",
-    primaryLabel: "Gerar distribuição"
+    description: "Cadastre as mesas, gere a distribuiÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o automÃƒÆ’Ã‚Â¡tica e revise sÃƒÆ’Ã‚Â³ as pendÃƒÆ’Ã‚Âªncias.",
+    primaryLabel: "Gerar distribuiÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o"
   },
   advanced: {
     index: 4,
-    description: "Presentes e conteúdo do site continuam acessíveis, mas fora do fluxo principal do painel.",
+    description: "Presentes e conteÃƒÆ’Ã‚Âºdo do site continuam acessÃƒÆ’Ã‚Â­veis, mas fora do fluxo principal do painel.",
     primaryLabel: "Novo presente"
   }
 };
@@ -103,6 +104,7 @@ const dom = {
   familyAutoLinkPreview: $("#familyAutoLinkPreview"),
   familyRemovalHint: $("#familyRemovalHint"),
   familySubmitButton: $("#familySubmitButton"),
+  familyDeleteButton: $("#familyDeleteButton"),
   familyResetButton: $("#familyResetButton"),
   familyFormFeedback: $("#familyFormFeedback"),
   familySavedActions: $("#familySavedActions"),
@@ -213,7 +215,6 @@ function emptyState(message) {
 
 function setFeedback(element, type, message) {
   if (!element) {
-    refreshCardCarousels();
     return;
   }
   element.textContent = message || "";
@@ -292,8 +293,6 @@ function wait(milliseconds) {
   return new Promise((resolve) => {
     window.setTimeout(resolve, milliseconds);
   });
-
-  refreshCardCarousels();
 }
 
 function setLoginBusy(isBusy) {
@@ -377,7 +376,7 @@ function logAdminEvent(level, message, details = {}) {
 
 function friendlyAdminErrorMessage(error, fallbackMessage) {
   if (error?.code === "permission-denied") {
-    return "O Firestore recusou esta ação por permissão. Confira o cadastro admin e as regras publicadas.";
+    return "O Firestore recusou esta aÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o por permissÃƒÆ’Ã‚Â£o. Confira o cadastro admin e as regras publicadas.";
   }
 
   return error?.message || fallbackMessage;
@@ -418,7 +417,7 @@ function giftById(giftId) {
 }
 
 function familyLabel(family) {
-  return family?.displayName || family?.familyName || "Família sem nome";
+  return family?.displayName || family?.familyName || "FamÃƒÆ’Ã‚Â­lia sem nome";
 }
 
 function copyText(value) {
@@ -499,7 +498,7 @@ function openInvitePreview() {
   const targetFamily = selectedFamily?.slug ? selectedFamily : fallbackFamily;
 
   if (!targetFamily?.slug) {
-    setGlobalFeedback("error", "Salve ou selecione um convite ativo antes de abrir a prévia.");
+    setGlobalFeedback("error", "Salve ou selecione um convite ativo antes de abrir a prÃƒÆ’Ã‚Â©via.");
     return;
   }
 
@@ -524,7 +523,7 @@ function renderChrome() {
 
   setText(
     dom.adminHeaderSummary,
-    `${state.families.length} ${state.families.length === 1 ? "convite" : "convites"} • ${confirmedGuests} confirmados`
+    `${state.families.length} ${state.families.length === 1 ? "convite" : "convites"} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ${confirmedGuests} confirmados`
   );
 }
 
@@ -578,7 +577,7 @@ function familyBadge(family) {
 function setFamilySlugEditorVisible(isVisible) {
   state.familySlugEditorVisible = isVisible;
   dom.familySlugEditor.hidden = !isVisible;
-  setText(dom.familyToggleSlugButton, isVisible ? "Ocultar edição do link" : "Editar link");
+  setText(dom.familyToggleSlugButton, isVisible ? "Ocultar ediÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o do link" : "Editar link");
 }
 
 function addGuestInputLine(initialValue = "") {
@@ -586,7 +585,7 @@ function addGuestInputLine(initialValue = "") {
   const wrapper = createElement("div", "admin-guest-input-line");
   const input = createElement("input", "");
   input.type = "text";
-  input.placeholder = "Ex.: João Silva";
+  input.placeholder = "Ex.: JoÃƒÆ’Ã‚Â£o Silva";
   input.value = initialValue;
   
   const removeBtn = createElement("button", "button button-small button-light-outline", "Remover");
@@ -604,9 +603,12 @@ function syncFamilyFormMode() {
   setText(
     dom.familyFormStatus,
     isEditing
-      ? "Revise os nomes, ajuste a mensagem e salve sem perder as respostas já registradas."
-      : "Cadastre uma família por vez e cole os convidados em linhas separadas."
+      ? "Revise os nomes, ajuste a mensagem e salve sem perder as respostas jÃƒÆ’Ã‚Â¡ registradas."
+      : "Cadastre uma famÃƒÆ’Ã‚Â­lia por vez e cole os convidados em linhas separadas."
   );
+  if (dom.familyDeleteButton) {
+    dom.familyDeleteButton.hidden = !isEditing;
+  }
 }
 
 function syncFamilyLinkPreview() {
@@ -617,7 +619,7 @@ function syncFamilyLinkPreview() {
   );
 
   if (!slug) {
-    setText(dom.familyAutoLinkPreview, "O link será gerado automaticamente.");
+    setText(dom.familyAutoLinkPreview, "O link serÃƒÆ’Ã‚Â¡ gerado automaticamente.");
     return;
   }
 
@@ -690,7 +692,7 @@ function renderFamilyRemovalHint() {
   const suffix = removedGuests.length > 3 ? "..." : "";
   setText(
     dom.familyRemovalHint,
-    `Se salvar agora, ${removedGuests.length} convidado(s) serão removidos: ${names}${suffix}`
+    `Se salvar agora, ${removedGuests.length} convidado(s) serÃƒÆ’Ã‚Â£o removidos: ${names}${suffix}`
   );
 }
 
@@ -764,7 +766,7 @@ async function handleFamilySave(event) {
   }
 
   if (!familyName || !displayName) {
-    setFeedback(dom.familyFormFeedback, "error", "Preencha o nome da família e o nome exibido.");
+    setFeedback(dom.familyFormFeedback, "error", "Preencha o nome da famÃƒÆ’Ã‚Â­lia e o nome exibido.");
     return;
   }
 
@@ -774,7 +776,7 @@ async function handleFamilySave(event) {
   }
 
   if (!slug) {
-    setFeedback(dom.familyFormFeedback, "error", "Não foi possível gerar o link do convite. Revise o nome da família.");
+    setFeedback(dom.familyFormFeedback, "error", "NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel gerar o link do convite. Revise o nome da famÃƒÆ’Ã‚Â­lia.");
     return;
   }
 
@@ -784,7 +786,7 @@ async function handleFamilySave(event) {
     const names = removedGuests.slice(0, 5).map((guest) => guest.name).join(", ");
     const suffix = removedGuests.length > 5 ? "..." : "";
     const confirmed = window.confirm(
-      `Ao salvar, estes convidados serão removidos e podem perder resposta e mesa: ${names}${suffix}\n\nDeseja continuar?`
+      `Ao salvar, estes convidados serÃƒÆ’Ã‚Â£o removidos e podem perder resposta e mesa: ${names}${suffix}\n\nDeseja continuar?`
     );
 
     if (!confirmed) {
@@ -816,7 +818,7 @@ async function handleFamilySave(event) {
     renderSavedFamilyActions();
     renderFamilyRemovalHint();
     setFeedback(dom.familyFormFeedback, "success", "Convite salvo com sucesso.");
-    setGlobalFeedback("success", "Convite salvo. Você já pode copiar o link e enviar.");
+    setGlobalFeedback("success", "Convite salvo. VocÃƒÆ’Ã‚Âª jÃƒÆ’Ã‚Â¡ pode copiar o link e enviar.");
   } catch (error) {
     console.error("Erro ao salvar convite:", error);
     logAdminEvent("error", "Falha ao salvar convite.", {
@@ -826,14 +828,92 @@ async function handleFamilySave(event) {
       slug
     });
     if (error?.code === "family/slug-already-exists") {
-      setFeedback(dom.familyFormFeedback, "error", "Já existe um convite com esse link. Clique em 'Editar link' e escolha outro.");
+      setFeedback(dom.familyFormFeedback, "error", "JÃƒÆ’Ã‚Â¡ existe um convite com esse link. Clique em 'Editar link' e escolha outro.");
     } else {
-      const message = friendlyAdminErrorMessage(error, "Não foi possível salvar este convite agora.");
+      const message = friendlyAdminErrorMessage(error, "NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel salvar este convite agora.");
       setFeedback(dom.familyFormFeedback, "error", message);
     }
   } finally {
     dom.familySubmitButton.disabled = false;
     setText(dom.familySubmitButton, "Salvar convite");
+  }
+}
+
+function confirmFamilyDeletion(family) {
+  const summary = summarizeGuests(family?.guests || []);
+  const guestLabel = summary.invitedCount === 1 ? "convidado" : "convidados";
+  const responseLabel = summary.confirmedCount === 1 ? "resposta confirmada" : "respostas confirmadas";
+
+  return window.confirm(
+    `Excluir o convite de ${familyLabel(family)}?\n\nIsso vai apagar o link, ${summary.invitedCount} ${guestLabel} e ${summary.confirmedCount} ${responseLabel}.`
+  );
+}
+
+async function handleFamilyDelete(familyId, options = {}) {
+  const targetFamilyId = normalizeString(familyId);
+  const family = familyById(targetFamilyId);
+  const feedbackElement = options.feedbackElement || dom.adminGlobalFeedback;
+
+  if (!requireActiveAdminSession(feedbackElement)) {
+    return;
+  }
+
+  if (!family) {
+    setFeedback(feedbackElement, "error", "Esse convite nÃƒÂ£o foi encontrado para exclusÃƒÂ£o.");
+    return;
+  }
+
+  if (!confirmFamilyDeletion(family)) {
+    return;
+  }
+
+  const triggerButton = options.triggerButton || null;
+  const wasEditingCurrentFamily = normalizeString(dom.familyId.value) === family.id;
+
+  if (triggerButton) {
+    triggerButton.disabled = true;
+  }
+
+  if (wasEditingCurrentFamily) {
+    dom.familySubmitButton.disabled = true;
+    dom.familyResetButton.disabled = true;
+    if (dom.familyDeleteButton) {
+      dom.familyDeleteButton.disabled = true;
+    }
+    setFeedback(dom.familyFormFeedback, "", "");
+  }
+
+  try {
+    await deleteFamily(family.id);
+
+    if (wasEditingCurrentFamily) {
+      openNewFamilyEditor();
+      setFeedback(dom.familyFormFeedback, "success", "Convite excluÃƒÂ­do com sucesso.");
+    }
+
+    setGlobalFeedback("success", "Convite excluÃƒÂ­do.");
+  } catch (error) {
+    console.error("Erro ao excluir convite:", error);
+    logAdminEvent("error", "Falha ao excluir convite.", {
+      code: error?.code || "",
+      errorMessage: error?.message || "",
+      familyId: family.id,
+      slug: family.slug || ""
+    });
+    const message = friendlyAdminErrorMessage(error, "NÃƒÂ£o foi possÃƒÂ­vel excluir este convite agora.");
+    setFeedback(feedbackElement, "error", message);
+  } finally {
+    if (triggerButton) {
+      triggerButton.disabled = false;
+    }
+
+    if (wasEditingCurrentFamily) {
+      dom.familySubmitButton.disabled = false;
+      dom.familyResetButton.disabled = false;
+      if (dom.familyDeleteButton) {
+        dom.familyDeleteButton.disabled = false;
+      }
+    }
   }
 }
 
@@ -936,7 +1016,7 @@ function renderFamilyCard(family, options = {}) {
         await copyText(inviteUrl(family.slug));
         setGlobalFeedback("success", "Link do convite copiado.");
       } catch {
-        setGlobalFeedback("error", "Não foi possível copiar o link agora.");
+        setGlobalFeedback("error", "Nao foi possivel copiar o link agora.");
       }
     });
     actions.appendChild(copyButton);
@@ -955,7 +1035,7 @@ function renderFamilyCard(family, options = {}) {
         await toggleFamilyActive(family.id, family.isActive === false);
         setGlobalFeedback("success", family.isActive === false ? "Convite ativado." : "Convite ocultado.");
       } catch {
-        setGlobalFeedback("error", "Não foi possível alterar esse convite agora.");
+        setGlobalFeedback("error", "Nao foi possivel alterar esse convite agora.");
       } finally {
         toggleButton.disabled = false;
       }
@@ -963,10 +1043,22 @@ function renderFamilyCard(family, options = {}) {
     actions.appendChild(toggleButton);
   }
 
+  if (options.showDelete !== false) {
+    const deleteButton = createElement("button", "button button-danger-soft", "Excluir");
+    deleteButton.type = "button";
+    deleteButton.addEventListener("click", () => {
+      handleFamilyDelete(family.id, {
+        triggerButton: deleteButton,
+        feedbackElement: dom.adminGlobalFeedback
+      });
+    });
+    actions.appendChild(deleteButton);
+  }
+
   const linkRow = createElement("div", "family-link-row");
   linkRow.append(
     createElement("span", "family-link-label", "Link do convite"),
-    createElement("div", "family-link-box", family.slug ? inviteUrl(family.slug) : "Esse convite ainda não tem link.")
+    createElement("div", "family-link-box", family.slug ? inviteUrl(family.slug) : "Esse convite ainda nao tem link.")
   );
 
   const stats = options.confirmationMode
@@ -990,7 +1082,7 @@ function renderFamilies() {
   dom.familyList.innerHTML = "";
   setText(
     dom.familyListSummary,
-    `${families.length} ${families.length === 1 ? "família encontrada" : "famílias encontradas"}`
+    `${families.length} ${families.length === 1 ? "familia encontrada" : "familias encontradas"}`
   );
 
   if (!families.length) {
@@ -1011,11 +1103,12 @@ function renderConfirmations() {
   dom.confirmationsList.innerHTML = "";
   setText(
     dom.confirmationsListSummary,
-    `${families.length} ${families.length === 1 ? "família listada" : "famílias listadas"}`
+    `${families.length} ${families.length === 1 ? "familia listada" : "familias listadas"}`
   );
 
   if (!families.length) {
-    dom.confirmationsList.appendChild(emptyState("Nenhuma família combina com a busca atual."));
+    dom.confirmationsList.appendChild(emptyState("Nenhuma familia combina com a busca atual."));
+    refreshCardCarousels();
     return;
   }
 
@@ -1024,10 +1117,13 @@ function renderConfirmations() {
       renderFamilyCard(family, {
         confirmationMode: true,
         editLabel: "Editar cadastro",
-        showToggle: false
+        showToggle: false,
+        showDelete: false
       })
     );
   });
+
+  refreshCardCarousels();
 }
 
 function confirmedFamilyRows() {
@@ -1124,7 +1220,7 @@ async function handleTableSave(event) {
   const existingTable = tableById(normalizeString(dom.tableId.value));
 
   if (!name || !capacity) {
-    setFeedback(dom.tableFormFeedback, "error", "Informe o nome da mesa e uma capacidade válida.");
+    setFeedback(dom.tableFormFeedback, "error", "Informe o nome da mesa e uma capacidade vÃƒÆ’Ã‚Â¡lida.");
     return;
   }
 
@@ -1152,7 +1248,7 @@ async function handleTableSave(event) {
       tableId: normalizeString(dom.tableId.value),
       name
     });
-    const message = friendlyAdminErrorMessage(error, "Não foi possível salvar esta mesa agora.");
+    const message = friendlyAdminErrorMessage(error, "NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel salvar esta mesa agora.");
     setFeedback(dom.tableFormFeedback, "error", message);
   } finally {
     dom.tableSubmitButton.disabled = false;
@@ -1170,8 +1266,8 @@ function renderTableStats() {
   [
     { label: "Mesas", value: String(state.tables.length) },
     { label: "Confirmados", value: String(confirmedGuests) },
-    { label: "Famílias alocadas", value: String(assignedFamilies) },
-    { label: "Pendências", value: String(pendingFamilies) }
+    { label: "FamÃƒÆ’Ã‚Â­lias alocadas", value: String(assignedFamilies) },
+    { label: "PendÃƒÆ’Ã‚Âªncias", value: String(pendingFamilies) }
   ].forEach((item) => {
     const stat = createElement("div", "family-stat");
     stat.append(createElement("strong", "", item.value), createElement("span", "", item.label));
@@ -1188,7 +1284,7 @@ function renderTables() {
   );
 
   if (!state.tables.length) {
-    dom.tableList.appendChild(emptyState("Cadastre pelo menos uma mesa para começar a distribuição."));
+    dom.tableList.appendChild(emptyState("Cadastre pelo menos uma mesa para comeÃƒÆ’Ã‚Â§ar a distribuiÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o."));
     return;
   }
 
@@ -1200,7 +1296,7 @@ function renderTables() {
       createElement("span", "occupancy-badge", `${usage.get(table.id) || 0}/${Number(table.capacity || 0)}`)
     );
 
-    const notes = createElement("p", "section-body compact-body", table.notes || "Sem observações.");
+    const notes = createElement("p", "section-body compact-body", table.notes || "Sem observaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes.");
     const actions = createElement("div", "inline-actions");
     const editButton = createElement("button", "button button-secondary button-solid-light", "Editar");
     editButton.type = "button";
@@ -1212,7 +1308,7 @@ function renderTables() {
       const occupiedSeats = usage.get(table.id) || 0;
       const confirmed = window.confirm(
         occupiedSeats
-          ? `Essa mesa tem ${occupiedSeats} confirmado(s). Excluir vai limpar essas alocações. Deseja continuar?`
+          ? `Essa mesa tem ${occupiedSeats} confirmado(s). Excluir vai limpar essas alocaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes. Deseja continuar?`
           : "Deseja excluir esta mesa?"
       );
 
@@ -1222,9 +1318,9 @@ function renderTables() {
 
       try {
         await deleteTable(table.id);
-        setGlobalFeedback("success", "Mesa excluída.");
+        setGlobalFeedback("success", "Mesa excluÃƒÆ’Ã‚Â­da.");
       } catch {
-        setGlobalFeedback("error", "Não foi possível excluir essa mesa agora.");
+        setGlobalFeedback("error", "NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel excluir essa mesa agora.");
       }
     });
 
@@ -1276,13 +1372,13 @@ async function handleGenerateAssignments() {
   const rows = confirmedFamilyRows();
 
   if (!state.tables.length) {
-    setFeedback(dom.tableGenerationFeedback, "error", "Cadastre pelo menos uma mesa antes de gerar a distribuição.");
+    setFeedback(dom.tableGenerationFeedback, "error", "Cadastre pelo menos uma mesa antes de gerar a distribuiÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o.");
     setCurrentStep("tables");
     return;
   }
 
   if (!rows.length) {
-    setFeedback(dom.tableGenerationFeedback, "error", "Ainda não há convidados confirmados para distribuir.");
+    setFeedback(dom.tableGenerationFeedback, "error", "Ainda nÃƒÆ’Ã‚Â£o hÃƒÆ’Ã‚Â¡ convidados confirmados para distribuir.");
     setCurrentStep("tables");
     return;
   }
@@ -1293,7 +1389,7 @@ async function handleGenerateAssignments() {
 
   if (assignedGuests > 0) {
     const confirmed = window.confirm(
-      "Gerar a distribuição vai substituir as alocações atuais dos convidados confirmados. Deseja continuar?"
+      "Gerar a distribuiÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o vai substituir as alocaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes atuais dos convidados confirmados. Deseja continuar?"
     );
 
     if (!confirmed) {
@@ -1319,20 +1415,20 @@ async function handleGenerateAssignments() {
     await saveGuestTableAssignments(changes);
     const allocatedFamilies = rows.length - plan.unresolvedFamilies.length;
     const pendingMessage = plan.unresolvedFamilies.length
-      ? ` ${plan.unresolvedFamilies.length} família(s) ficaram pendentes para revisão manual.`
+      ? ` ${plan.unresolvedFamilies.length} famÃƒÆ’Ã‚Â­lia(s) ficaram pendentes para revisÃƒÆ’Ã‚Â£o manual.`
       : "";
     setFeedback(
       dom.tableGenerationFeedback,
       "success",
-      `${allocatedFamilies} família(s) foram distribuídas automaticamente.${pendingMessage}`
+      `${allocatedFamilies} famÃƒÆ’Ã‚Â­lia(s) foram distribuÃƒÆ’Ã‚Â­das automaticamente.${pendingMessage}`
     );
-    setGlobalFeedback("success", "Distribuição de mesas atualizada.");
+    setGlobalFeedback("success", "DistribuiÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o de mesas atualizada.");
     setCurrentStep("tables");
   } catch {
-    setFeedback(dom.tableGenerationFeedback, "error", "Não foi possível gerar a distribuição agora.");
+    setFeedback(dom.tableGenerationFeedback, "error", "NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel gerar a distribuiÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o agora.");
   } finally {
     dom.generateAssignmentsButton.disabled = false;
-    setText(dom.generateAssignmentsButton, "Gerar distribuição");
+    setText(dom.generateAssignmentsButton, "Gerar distribuiÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o");
   }
 }
 
@@ -1341,7 +1437,7 @@ async function handleManualFamilyAssignment(row, nextTableId) {
     const availableSeats = availableSeatsForFamily(row, nextTableId);
 
     if (availableSeats < row.confirmedCount) {
-      setFeedback(dom.seatingFeedback, "error", "Essa mesa não tem lugares suficientes para manter a família junta.");
+      setFeedback(dom.seatingFeedback, "error", "Essa mesa nÃƒÆ’Ã‚Â£o tem lugares suficientes para manter a famÃƒÆ’Ã‚Â­lia junta.");
       renderSeatingAssignments();
       return;
     }
@@ -1353,9 +1449,9 @@ async function handleManualFamilyAssignment(row, nextTableId) {
       guestId: guest.id,
       tableId: nextTableId
     })));
-    setFeedback(dom.seatingFeedback, "success", "Mesa da família atualizada com sucesso.");
+    setFeedback(dom.seatingFeedback, "success", "Mesa da famÃƒÆ’Ã‚Â­lia atualizada com sucesso.");
   } catch {
-    setFeedback(dom.seatingFeedback, "error", "Não foi possível atualizar essa família agora.");
+    setFeedback(dom.seatingFeedback, "error", "NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel atualizar essa famÃƒÆ’Ã‚Â­lia agora.");
   }
 }
 
@@ -1371,7 +1467,7 @@ function renderSeatingAssignments() {
   dom.seatingFamilyList.innerHTML = "";
 
   if (!rows.length) {
-    dom.seatingFamilyList.appendChild(emptyState("Nenhuma família confirmada combina com a busca atual."));
+    dom.seatingFamilyList.appendChild(emptyState("Nenhuma famÃƒÆ’Ã‚Â­lia confirmada combina com a busca atual."));
     return;
   }
 
@@ -1379,13 +1475,13 @@ function renderSeatingAssignments() {
     const shell = createElement("div", "assignment-row admin-family-seat-row");
     const copy = createElement("div", "assignment-copy");
     const currentTableText = row.isSplit
-      ? "Família dividida entre mesas"
+      ? "FamÃƒÆ’Ã‚Â­lia dividida entre mesas"
       : row.currentTableId
         ? `Mesa atual: ${tableById(row.currentTableId)?.name || "Mesa removida"}`
         : "Sem mesa definida";
     copy.append(
       createElement("strong", "", row.displayName),
-      createElement("span", "", `${row.confirmedCount} confirmado(s) • ${currentTableText}`)
+      createElement("span", "", `${row.confirmedCount} confirmado(s) ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ${currentTableText}`)
     );
 
     const select = createElement("select", "assignment-select");
@@ -1499,12 +1595,12 @@ async function handleGiftSave(event) {
   }
 
   if (!imageUrl || !isValidUrl(imageUrl)) {
-    setFeedback(dom.giftFormFeedback, "error", "Informe uma URL de imagem válida.");
+    setFeedback(dom.giftFormFeedback, "error", "Informe uma URL de imagem vÃƒÆ’Ã‚Â¡lida.");
     return;
   }
 
   if (purchaseUrl && !isValidUrl(purchaseUrl)) {
-    setFeedback(dom.giftFormFeedback, "error", "Informe um link de compra válido.");
+    setFeedback(dom.giftFormFeedback, "error", "Informe um link de compra vÃƒÆ’Ã‚Â¡lido.");
     return;
   }
 
@@ -1532,7 +1628,7 @@ async function handleGiftSave(event) {
       giftId: normalizeString(dom.giftId.value),
       name
     });
-    const message = friendlyAdminErrorMessage(error, "Não foi possível salvar esse presente agora.");
+    const message = friendlyAdminErrorMessage(error, "NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel salvar esse presente agora.");
     setFeedback(dom.giftFormFeedback, "error", message);
   } finally {
     dom.giftSubmitButton.disabled = false;
@@ -1563,7 +1659,7 @@ function renderGifts() {
     const body = createElement("div", "gift-admin-body");
     body.append(
       createElement("h3", "panel-subtitle", gift.name || "Presente sem nome"),
-      createElement("p", "section-body compact-body", gift.isActive === false ? "Oculto na landing" : "Visível na landing")
+      createElement("p", "section-body compact-body", gift.isActive === false ? "Oculto na landing" : "VisÃƒÆ’Ã‚Â­vel na landing")
     );
 
     const actions = createElement("div", "inline-actions");
@@ -1589,7 +1685,7 @@ function renderGifts() {
         });
         setGlobalFeedback("success", "Visibilidade do presente atualizada.");
       } catch {
-        setGlobalFeedback("error", "Não foi possível atualizar esse presente agora.");
+        setGlobalFeedback("error", "NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel atualizar esse presente agora.");
       }
     });
 
@@ -1602,9 +1698,9 @@ function renderGifts() {
 
       try {
         await deleteGiftItem(gift.id);
-        setGlobalFeedback("success", "Presente excluído.");
+        setGlobalFeedback("success", "Presente excluÃƒÆ’Ã‚Â­do.");
       } catch {
-        setGlobalFeedback("error", "Não foi possível excluir esse presente agora.");
+        setGlobalFeedback("error", "NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel excluir esse presente agora.");
       }
     });
 
@@ -1626,7 +1722,7 @@ async function loadRemoteSiteSettings() {
     setFeedback(
       dom.siteSettingsFeedback,
       "error",
-      "Não foi possível carregar as informações do site agora. Os valores padrão foram mantidos na tela."
+      "NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel carregar as informaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes do site agora. Os valores padrÃƒÆ’Ã‚Â£o foram mantidos na tela."
     );
   }
 }
@@ -1641,17 +1737,17 @@ async function handleSiteSave(event) {
   const payload = sitePayloadFromForm();
 
   if (!payload.couple.names || !payload.couple.dateText || !payload.couple.dateTime) {
-    setFeedback(dom.siteSettingsFeedback, "error", "Preencha o nome do casal, a data exibida e o horário do evento.");
+    setFeedback(dom.siteSettingsFeedback, "error", "Preencha o nome do casal, a data exibida e o horÃƒÆ’Ã‚Â¡rio do evento.");
     return;
   }
 
   if (!payload.event.venueName || !payload.event.address || !payload.event.mapsLabel || !payload.event.mapsUrl) {
-    setFeedback(dom.siteSettingsFeedback, "error", "Preencha as informações de local e o link do mapa.");
+    setFeedback(dom.siteSettingsFeedback, "error", "Preencha as informaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes de local e o link do mapa.");
     return;
   }
 
   if (!isValidUrl(payload.event.mapsUrl)) {
-    setFeedback(dom.siteSettingsFeedback, "error", "Informe um link de mapa válido.");
+    setFeedback(dom.siteSettingsFeedback, "error", "Informe um link de mapa vÃƒÆ’Ã‚Â¡lido.");
     return;
   }
 
@@ -1662,19 +1758,19 @@ async function handleSiteSave(event) {
   try {
     await saveSiteSettings(payload);
     state.siteConfig = buildRuntimeConfig(mergeDeep(state.siteConfig, payload));
-    setFeedback(dom.siteSettingsFeedback, "success", "Informações do site salvas com sucesso.");
-    setGlobalFeedback("success", "Conteúdo do site atualizado.");
+    setFeedback(dom.siteSettingsFeedback, "success", "InformaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes do site salvas com sucesso.");
+    setGlobalFeedback("success", "ConteÃƒÆ’Ã‚Âºdo do site atualizado.");
   } catch (error) {
-    console.error("Erro ao salvar configurações do site:", error);
+    console.error("Erro ao salvar configuraÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes do site:", error);
     logAdminEvent("error", "Falha ao salvar configuracoes do site.", {
       code: error?.code || "",
       errorMessage: error?.message || ""
     });
-    const message = friendlyAdminErrorMessage(error, "Não foi possível salvar as informações do site agora.");
+    const message = friendlyAdminErrorMessage(error, "NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel salvar as informaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes do site agora.");
     setFeedback(dom.siteSettingsFeedback, "error", message);
   } finally {
     dom.siteSettingsSubmitButton.disabled = false;
-    setText(dom.siteSettingsSubmitButton, "Salvar informações do site");
+    setText(dom.siteSettingsSubmitButton, "Salvar informaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes do site");
   }
 }
 
@@ -1732,21 +1828,21 @@ function startSubscriptions() {
     state.families = families;
     renderAll();
   }, () => {
-    setGlobalFeedback("error", "Não foi possível carregar os convites agora.");
+    setGlobalFeedback("error", "NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel carregar os convites agora.");
   });
 
   state.unsubscribeGifts = subscribeGiftItems((gifts) => {
     state.gifts = gifts;
     renderAll();
   }, () => {
-    setGlobalFeedback("error", "Não foi possível carregar os presentes agora.");
+    setGlobalFeedback("error", "NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel carregar os presentes agora.");
   });
 
   state.unsubscribeTables = subscribeTables((tables) => {
     state.tables = tables;
     renderAll();
   }, () => {
-    setGlobalFeedback("error", "Não foi possível carregar as mesas agora.");
+    setGlobalFeedback("error", "NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel carregar as mesas agora.");
   });
 }
 
@@ -1858,6 +1954,20 @@ function initialize() {
   openNewTableEditor();
   resetGiftForm();
   applySiteFormData(siteFormDataFromConfig(state.siteConfig));
+  registerCarousel(
+    dom.familyCarousel,
+    dom.familyListViewport,
+    dom.familyList,
+    dom.familyCarouselPrev,
+    dom.familyCarouselNext
+  );
+  registerCarousel(
+    dom.confirmationsCarousel,
+    dom.confirmationsListViewport,
+    dom.confirmationsList,
+    dom.confirmationsCarouselPrev,
+    dom.confirmationsCarouselNext
+  );
   dom.adminPrimaryActionButton.addEventListener("click", primaryStepAction);
   dom.adminPreviewInviteButton.addEventListener("click", openInvitePreview);
   dom.siteViewInviteButton.addEventListener("click", openInvitePreview);
@@ -1901,10 +2011,16 @@ function initialize() {
       setGlobalFeedback("", "");
       showLoggedOutState();
     } catch {
-      setGlobalFeedback("error", "Não foi possível encerrar a sessão agora.");
+      setGlobalFeedback("error", "NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel encerrar a sessÃƒÆ’Ã‚Â£o agora.");
     }
   });
   dom.familyForm.addEventListener("submit", handleFamilySave);
+  dom.familyDeleteButton?.addEventListener("click", () => {
+    handleFamilyDelete(dom.familyId.value, {
+      triggerButton: dom.familyDeleteButton,
+      feedbackElement: dom.familyFormFeedback
+    });
+  });
   dom.familyResetButton.addEventListener("click", openNewFamilyEditor);
   dom.familySearchInput.addEventListener("input", renderFamilies);
   dom.confirmationsSearchInput.addEventListener("input", renderConfirmations);
@@ -1925,7 +2041,7 @@ function initialize() {
       await copyText(state.lastSavedInviteUrl);
       setGlobalFeedback("success", "Link do convite copiado.");
     } catch {
-      setGlobalFeedback("error", "Não foi possível copiar o link agora.");
+      setGlobalFeedback("error", "NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel copiar o link agora.");
     }
   });
   dom.tableForm.addEventListener("submit", handleTableSave);

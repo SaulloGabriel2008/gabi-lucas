@@ -271,6 +271,42 @@ export async function toggleFamilyActive(familyId, isActive) {
   await batch.commit();
 }
 
+export async function deleteFamily(familyId) {
+  const normalizedFamilyId = String(familyId || "").trim();
+
+  if (!normalizedFamilyId) {
+    return;
+  }
+
+  const db = getDb();
+  const familyRef = db.collection("families").doc(normalizedFamilyId);
+  const familySnapshot = await familyRef.get();
+
+  if (!familySnapshot.exists) {
+    return;
+  }
+
+  const slug = String(familySnapshot.data()?.slug || "").trim().toLowerCase();
+  const guestSnapshots = await familyRef.collection("guests").get();
+  const refsToDelete = guestSnapshots.docs.map((guestSnapshot) => guestSnapshot.ref);
+
+  refsToDelete.push(familyRef);
+
+  if (slug) {
+    refsToDelete.push(db.collection("inviteLinks").doc(slug));
+  }
+
+  const batchSize = 400;
+
+  for (let index = 0; index < refsToDelete.length; index += batchSize) {
+    const batch = db.batch();
+    refsToDelete.slice(index, index + batchSize).forEach((ref) => {
+      batch.delete(ref);
+    });
+    await batch.commit();
+  }
+}
+
 export function subscribeFamilies(callback, errorCallback) {
   return getDb().collection("families").onSnapshot(async (snapshot) => {
     try {
