@@ -7,12 +7,20 @@ import {
   formatInviteStatus,
   mergeDeep,
   setText,
+  setupMobileDrawer,
   setupRevealAnimations,
+  setupSmoothScroll,
   startCountdown,
   summarizeGuests
 } from "../ui/shared-ui.mjs";
 
 const dom = {
+  inviteNavToggle: document.querySelector("#inviteNavToggle"),
+  inviteDrawerShell: document.querySelector("#inviteDrawerShell"),
+  inviteDrawer: document.querySelector("#inviteDrawer"),
+  inviteDrawerBackdrop: document.querySelector("#inviteDrawerBackdrop"),
+  inviteDrawerClose: document.querySelector("#inviteDrawerClose"),
+  inviteDrawerMapsLink: document.querySelector("#inviteDrawerMapsLink"),
   inviteHeroFrame: document.querySelector("#inviteHeroFrame"),
   inviteHeroImage: document.querySelector("#inviteHeroImage"),
   inviteEyebrow: document.querySelector("#inviteEyebrow"),
@@ -111,7 +119,7 @@ function draftGuestSummary(invite) {
 }
 
 function inviteLeadText(invite) {
-  return `Estamos convidando voce e sua familia para celebrar o nosso casamento com a gente. Abaixo estao os nomes reservados neste convite.`;
+  return "Estamos convidando você e sua família para celebrar o nosso casamento com a gente. Abaixo estão os nomes reservados neste convite.";
 }
 
 function getInviteSlug() {
@@ -133,6 +141,8 @@ function hydrateSharedContent() {
   setText(dom.inviteVenueText, `${runtimeConfig.event.venueName} - ${runtimeConfig.event.address}`);
   dom.inviteMapsLink.href = runtimeConfig.event.mapsUrl;
   setText(dom.inviteMapsLink, runtimeConfig.event.mapsLabel);
+  dom.inviteDrawerMapsLink.href = runtimeConfig.event.mapsUrl;
+  setText(dom.inviteDrawerMapsLink, runtimeConfig.event.mapsLabel);
 }
 
 function updateGuestCardState(card, status) {
@@ -150,7 +160,7 @@ function updateGuestCardState(card, status) {
 
 function updateSummaryUI(invite, useDraft = false) {
   const summary = useDraft ? draftGuestSummary(invite) : guestSummary(invite);
-  setText(dom.inviteResponseSummary, `${summary.confirmed} confirmados, ${summary.declined} nao vao e ${summary.pending} pendentes`);
+  setText(dom.inviteResponseSummary, `${summary.confirmed} confirmados, ${summary.declined} não vão e ${summary.pending} pendentes`);
 }
 
 function renderInvitedNames(invite) {
@@ -185,7 +195,7 @@ function renderGuestChoices(invite) {
 
     [
       { value: "confirmed", label: "Vai" },
-      { value: "declined", label: "Nao vai" }
+      { value: "declined", label: "Não vai" }
     ].forEach((option) => {
       const choice = createElement("label", "choice-pill");
       const input = createElement("input");
@@ -217,7 +227,7 @@ function renderInvite(invite) {
   document.title = `${invite.displayName} | Convite | ${runtimeConfig.couple.names}`;
   setText(dom.inviteFamilyTitle, invite.displayName);
   setText(dom.inviteIntroLead, inviteLeadText(invite));
-  setText(dom.inviteCustomMessage, invite.customMessage || "Preparamos esse convite com carinho para sua familia e vamos amar celebrar esse momento com voces.");
+  setText(dom.inviteCustomMessage, invite.customMessage || "Preparamos esse convite com carinho para sua família e vamos amar celebrar esse momento com vocês.");
   setText(dom.inviteReservedSeats, String(summary.invitedCount));
   setText(dom.inviteStatusText, formatInviteStatus(summary.responseStatus));
   renderInvitedNames(invite);
@@ -265,7 +275,7 @@ function resetSuccessModalState() {
   closeSuccessModal();
   setText(
     dom.inviteSuccessBody,
-    "Se quiser, voce pode continuar navegando pelo site principal para ver mais detalhes da celebracao."
+    "Se quiser, você pode continuar navegando pelo site principal para ver mais detalhes da celebração."
   );
 }
 
@@ -349,8 +359,8 @@ function setupInviteForm() {
       setText(
         dom.inviteSuccessBody,
         pendingCount > 0
-          ? "Registramos as respostas marcadas. Se quiser, voce pode voltar depois para concluir os nomes que ainda ficaram pendentes."
-          : "Registramos todas as respostas deste convite. Se quiser, voce pode continuar navegando pelo site principal para ver mais detalhes da celebracao."
+          ? "Registramos as respostas marcadas. Se quiser, você pode voltar depois para concluir os nomes que ainda ficaram pendentes."
+          : "Registramos todas as respostas deste convite. Se quiser, você pode continuar navegando pelo site principal para ver mais detalhes da celebração."
       );
       openSuccessModal();
     } catch (error) {
@@ -380,6 +390,14 @@ async function initialize() {
   hydrateSharedContent();
   setupInviteForm();
   setupModal();
+  setupSmoothScroll(document);
+  setupMobileDrawer({
+    shell: dom.inviteDrawerShell,
+    drawer: dom.inviteDrawer,
+    toggleButton: dom.inviteNavToggle,
+    closeButton: dom.inviteDrawerClose,
+    backdrop: dom.inviteDrawerBackdrop
+  });
   setupRevealAnimations();
   startCountdown(runtimeConfig.couple.dateTime, {
     shell: dom.inviteCountdownShell,

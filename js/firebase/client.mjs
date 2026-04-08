@@ -63,6 +63,26 @@ function normalizeGuestStatus(status) {
   return "pending";
 }
 
+function normalizeInviteSlug(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function uniqueSlugList(values) {
+  return Array.from(new Set(
+    (Array.isArray(values) ? values : [])
+      .map((value) => normalizeInviteSlug(value))
+      .filter(Boolean)
+  ));
+}
+
+function familySlugAliases(familyData, nextSlug = "") {
+  return uniqueSlugList([
+    ...(Array.isArray(familyData?.slugAliases) ? familyData.slugAliases : []),
+    familyData?.slug,
+    nextSlug
+  ]);
+}
+
 export function normalizeAdminEmail(value) {
   return String(value || "").trim().toLowerCase();
 }
@@ -190,7 +210,7 @@ export async function saveFamily(familyInput) {
     : null;
   const batch = db.batch();
   const now = getServerTimestamp();
-  const previousSlug = String(existingFamily?.slug || "").trim().toLowerCase();
+  const nextSlugAliases = familySlugAliases(existingFamily, slug);
 
   batch.set(familyRef, {
     familyName: String(familyInput?.familyName || "").trim(),
@@ -198,20 +218,19 @@ export async function saveFamily(familyInput) {
     customMessage: String(familyInput?.customMessage || "").trim(),
     attendanceNote: String(familyInput?.attendanceNote || "").trim(),
     slug,
+    slugAliases: nextSlugAliases,
     isActive: Boolean(familyInput?.isActive),
     updatedAt: now,
     ...(existingSnapshot?.exists ? {} : { createdAt: now })
   }, { merge: true });
 
-  batch.set(db.collection("inviteLinks").doc(slug), {
-    familyId: familyRef.id,
-    isActive: Boolean(familyInput?.isActive),
-    updatedAt: now
-  }, { merge: true });
-
-  if (previousSlug && previousSlug !== slug) {
-    batch.delete(db.collection("inviteLinks").doc(previousSlug));
-  }
+  nextSlugAliases.forEach((alias) => {
+    batch.set(db.collection("inviteLinks").doc(alias), {
+      familyId: familyRef.id,
+      isActive: Boolean(familyInput?.isActive),
+      updatedAt: now
+    }, { merge: true });
+  });
 
   const nextGuestIds = new Set();
 
@@ -251,7 +270,7 @@ export async function toggleFamilyActive(familyId, isActive) {
     throw new Error("Família não encontrada.");
   }
 
-  const slug = String(snapshot.data().slug || "").trim().toLowerCase();
+  const aliases = familySlugAliases(snapshot.data());
   const now = getServerTimestamp();
   const batch = db.batch();
 
@@ -260,13 +279,13 @@ export async function toggleFamilyActive(familyId, isActive) {
     updatedAt: now
   }, { merge: true });
 
-  if (slug) {
-    batch.set(db.collection("inviteLinks").doc(slug), {
+  aliases.forEach((alias) => {
+    batch.set(db.collection("inviteLinks").doc(alias), {
       familyId,
       isActive: Boolean(isActive),
       updatedAt: now
     }, { merge: true });
-  }
+  });
 
   await batch.commit();
 }
@@ -286,15 +305,15 @@ export async function deleteFamily(familyId) {
     return;
   }
 
-  const slug = String(familySnapshot.data()?.slug || "").trim().toLowerCase();
+  const aliases = familySlugAliases(familySnapshot.data());
   const guestSnapshots = await familyRef.collection("guests").get();
   const refsToDelete = guestSnapshots.docs.map((guestSnapshot) => guestSnapshot.ref);
 
   refsToDelete.push(familyRef);
 
-  if (slug) {
-    refsToDelete.push(db.collection("inviteLinks").doc(slug));
-  }
+  aliases.forEach((alias) => {
+    refsToDelete.push(db.collection("inviteLinks").doc(alias));
+  });
 
   const batchSize = 400;
 

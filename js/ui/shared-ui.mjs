@@ -104,6 +104,143 @@ export function setupSmoothScroll(root = document) {
   });
 }
 
+export function setupMobileDrawer({
+  shell,
+  drawer,
+  toggleButton,
+  closeButton,
+  backdrop,
+  desktopQuery = "(min-width: 48rem)",
+  transitionMs = 240
+} = {}) {
+  if (!shell || !drawer || !toggleButton) {
+    return {
+      open() {},
+      close() {},
+      toggle() {}
+    };
+  }
+
+  const desktopMedia = window.matchMedia(desktopQuery);
+  const focusableSelector = [
+    "a[href]",
+    "button:not([disabled])",
+    "input:not([disabled])",
+    "select:not([disabled])",
+    "textarea:not([disabled])",
+    "[tabindex]:not([tabindex='-1'])"
+  ].join(", ");
+  let isOpen = false;
+  let closeTimer = null;
+  let lastFocusedElement = null;
+
+  function clearCloseTimer() {
+    if (closeTimer) {
+      window.clearTimeout(closeTimer);
+      closeTimer = null;
+    }
+  }
+
+  function syncExpandedState() {
+    toggleButton.setAttribute("aria-expanded", String(isOpen));
+  }
+
+  function focusDrawerContent() {
+    const preferredTarget = closeButton || drawer.querySelector(focusableSelector) || drawer;
+    preferredTarget.focus();
+  }
+
+  function finalizeClose(restoreFocus = true) {
+    shell.hidden = true;
+    shell.classList.remove("is-open");
+    document.body.classList.remove("has-drawer-open");
+
+    if (restoreFocus && lastFocusedElement instanceof HTMLElement) {
+      lastFocusedElement.focus();
+    }
+  }
+
+  function open() {
+    if (isOpen) {
+      return;
+    }
+
+    clearCloseTimer();
+    isOpen = true;
+    lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    shell.hidden = false;
+    document.body.classList.add("has-drawer-open");
+    syncExpandedState();
+
+    window.requestAnimationFrame(() => {
+      shell.classList.add("is-open");
+      focusDrawerContent();
+    });
+  }
+
+  function close({ restoreFocus = true } = {}) {
+    if (!isOpen) {
+      return;
+    }
+
+    clearCloseTimer();
+    isOpen = false;
+    syncExpandedState();
+    shell.classList.remove("is-open");
+    document.body.classList.remove("has-drawer-open");
+    closeTimer = window.setTimeout(() => finalizeClose(restoreFocus), transitionMs);
+  }
+
+  function toggle() {
+    if (isOpen) {
+      close();
+      return;
+    }
+
+    open();
+  }
+
+  function handleKeydown(event) {
+    if (event.key === "Escape") {
+      close();
+    }
+  }
+
+  function handleLinkClick(event) {
+    const target = event.target instanceof Element ? event.target.closest("a[href]") : null;
+
+    if (target) {
+      close({ restoreFocus: false });
+    }
+  }
+
+  function handleDesktopChange(event) {
+    if (event.matches) {
+      close({ restoreFocus: false });
+    }
+  }
+
+  toggleButton.addEventListener("click", toggle);
+  closeButton?.addEventListener("click", () => close());
+  backdrop?.addEventListener("click", () => close({ restoreFocus: false }));
+  drawer.addEventListener("click", handleLinkClick);
+  document.addEventListener("keydown", handleKeydown);
+
+  if (typeof desktopMedia.addEventListener === "function") {
+    desktopMedia.addEventListener("change", handleDesktopChange);
+  } else if (typeof desktopMedia.addListener === "function") {
+    desktopMedia.addListener(handleDesktopChange);
+  }
+
+  syncExpandedState();
+
+  return {
+    open,
+    close,
+    toggle
+  };
+}
+
 export function setupRevealAnimations() {
   const revealElements = document.querySelectorAll(".reveal");
 
@@ -184,10 +321,35 @@ export function slugify(value) {
     .slice(0, 60);
 }
 
-export function generateReadableInviteSlug(label) {
+function normalizeReservedSlugs(values) {
+  return new Set(
+    (Array.isArray(values) ? values : [])
+      .map((value) => slugify(value))
+      .filter(Boolean)
+  );
+}
+
+export function isLegacyRandomInviteSlug(value) {
+  return /-[a-z0-9]{6}$/.test(slugify(value));
+}
+
+export function generateReadableInviteSlug(label, reservedSlugs = []) {
   const base = slugify(label) || "familia";
-  const randomPart = Math.random().toString(36).slice(2, 8);
-  return `${base}-${randomPart}`;
+  const reserved = normalizeReservedSlugs(reservedSlugs);
+
+  if (!reserved.has(base)) {
+    return base;
+  }
+
+  let suffix = 2;
+  let candidate = `${base}-${suffix}`;
+
+  while (reserved.has(candidate)) {
+    suffix += 1;
+    candidate = `${base}-${suffix}`;
+  }
+
+  return candidate;
 }
 
 export function formatInviteStatus(status) {

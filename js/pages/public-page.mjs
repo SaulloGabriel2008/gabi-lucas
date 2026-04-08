@@ -5,6 +5,7 @@ import {
   createElement,
   mergeDeep,
   setText,
+  setupMobileDrawer,
   setupRevealAnimations,
   setupSmoothScroll,
   startCountdown
@@ -12,7 +13,14 @@ import {
 
 const dom = {
   headerMonogram: document.querySelector("#headerMonogram"),
-  navLinks: document.querySelectorAll(".site-nav a[data-nav-key]"),
+  navLinks: document.querySelectorAll(".site-nav a[data-nav-key], .site-drawer-nav a[data-nav-key]"),
+  siteNavToggle: document.querySelector("#siteNavToggle"),
+  siteDrawerShell: document.querySelector("#siteDrawerShell"),
+  siteDrawer: document.querySelector("#siteDrawer"),
+  siteDrawerBackdrop: document.querySelector("#siteDrawerBackdrop"),
+  siteDrawerClose: document.querySelector("#siteDrawerClose"),
+  siteDrawerPrimaryCta: document.querySelector("#siteDrawerPrimaryCta"),
+  siteDrawerSecondaryCta: document.querySelector("#siteDrawerSecondaryCta"),
   heroFrame: document.querySelector("#heroFrame"),
   heroImage: document.querySelector("#heroImage"),
   heroEyebrow: document.querySelector("#heroEyebrow"),
@@ -193,13 +201,19 @@ function hydrateStaticContent(config) {
   setText(dom.heroSubtitle, config.couple.subtitle);
   setText(dom.heroPrimaryCta, config.navigation.secondaryCtaLabel || "Ver local");
   dom.heroPrimaryCta.href = config.navigation.secondaryCtaHref || "#local";
+  setText(dom.siteDrawerPrimaryCta, config.navigation.secondaryCtaLabel || "Ver local");
+  dom.siteDrawerPrimaryCta.href = config.navigation.secondaryCtaHref || "#local";
 
   if (config.features.showGifts === false) {
     setText(dom.heroSecondaryCta, "Ver agenda");
     dom.heroSecondaryCta.href = "#agenda";
+    setText(dom.siteDrawerSecondaryCta, "Ver agenda");
+    dom.siteDrawerSecondaryCta.href = "#agenda";
   } else {
     setText(dom.heroSecondaryCta, config.navigation.items.gifts || "Presentes");
     dom.heroSecondaryCta.href = "#presentes";
+    setText(dom.siteDrawerSecondaryCta, config.navigation.items.gifts || "Presentes");
+    dom.siteDrawerSecondaryCta.href = "#presentes";
   }
 
   setText(dom.introKicker, config.publicSite.intro.kicker);
@@ -255,6 +269,13 @@ async function initialize() {
   renderGifts(config, runtimeData.giftItems || []);
   renderGallery(config);
   setupSmoothScroll(document);
+  setupMobileDrawer({
+    shell: dom.siteDrawerShell,
+    drawer: dom.siteDrawer,
+    toggleButton: dom.siteNavToggle,
+    closeButton: dom.siteDrawerClose,
+    backdrop: dom.siteDrawerBackdrop
+  });
   setupRevealAnimations();
   startCountdown(config.couple.dateTime, {
     shell: dom.countdownShell,

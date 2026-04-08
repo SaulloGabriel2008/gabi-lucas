@@ -13,9 +13,48 @@
       <a class="brand-mark" href="index.html" aria-label="Ir para o site principal">
         <span>A &amp; L</span>
       </a>
-      <a class="button button-secondary button-solid-light" href="index.html">Voltar ao site</a>
+      <div class="header-actions header-actions-public">
+        <a id="inviteHeaderCta" class="button button-primary site-header-cta" href="#resposta">Confirmar presença</a>
+        <a class="button button-secondary button-solid-light site-header-backlink" href="index.html">Voltar ao site</a>
+        <button
+          id="inviteNavToggle"
+          class="mobile-nav-toggle"
+          type="button"
+          aria-controls="inviteDrawer"
+          aria-expanded="false"
+          aria-label="Abrir menu do convite"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
     </div>
   </header>
+
+  <div id="inviteDrawerShell" class="site-drawer-shell" hidden>
+    <button id="inviteDrawerBackdrop" class="site-drawer-backdrop" type="button" aria-label="Fechar menu"></button>
+    <aside id="inviteDrawer" class="site-drawer" tabindex="-1" aria-labelledby="inviteDrawerTitle">
+      <div class="site-drawer-head">
+        <div>
+          <p class="section-kicker">Convite</p>
+          <h2 id="inviteDrawerTitle" class="site-drawer-title">Menu do convite</h2>
+        </div>
+        <button id="inviteDrawerClose" class="site-drawer-close" type="button" aria-label="Fechar menu">×</button>
+      </div>
+
+      <nav class="site-drawer-nav" aria-label="Navegação do convite">
+        <a href="#resposta">Confirmar presença</a>
+        <a href="#detalhes">Data e local</a>
+        <a href="#contagem">Contagem regressiva</a>
+      </nav>
+
+      <div class="site-drawer-actions">
+        <a id="inviteDrawerBackLink" class="button button-secondary button-solid-light" href="index.html">Voltar ao site</a>
+        <a id="inviteDrawerMapsLink" class="button button-primary" href="" target="_blank" rel="noreferrer">Abrir mapa</a>
+      </div>
+    </aside>
+  </div>
 
   <main>
     <section class="hero-section invite-hero">
@@ -30,15 +69,15 @@
       </div>
     </section>
 
-    <section class="section">
+    <section id="resposta" class="section">
       <div class="container split-grid">
         <div class="panel-copy reveal">
-          <p class="section-kicker">Convite da familia</p>
+          <p class="section-kicker">Convite da família</p>
           <h2 id="inviteFamilyTitle" class="section-title"></h2>
           <p id="inviteIntroLead" class="section-body invite-lead"></p>
           <p id="inviteCustomMessage" class="section-body"></p>
           <div class="invite-name-panel">
-            <span class="invite-name-label">Nomes convidados</span>
+            <span class="invite-name-label">Convidados deste convite</span>
             <div id="inviteNameList" class="invite-name-list"></div>
           </div>
           <div class="invite-meta">
@@ -79,24 +118,24 @@
       </div>
     </section>
 
-    <section class="section olive-section">
+    <section id="detalhes" class="section olive-section">
       <div class="container split-grid">
         <div class="panel-copy reveal">
           <p class="section-kicker section-kicker-light">Data e local</p>
-          <h2 class="section-title section-title-light">Esperamos sua familia para viver esse dia conosco.</h2>
+          <h2 class="section-title section-title-light">Esperamos sua família para viver esse dia conosco.</h2>
           <p id="inviteDateText" class="section-body section-body-light"></p>
           <p id="inviteVenueText" class="section-body section-body-light"></p>
           <a id="inviteMapsLink" class="button button-secondary button-light-outline" href="" target="_blank" rel="noreferrer">Abrir no Google Maps</a>
         </div>
         <div class="panel panel-map reveal">
           <div class="map-placeholder map-placeholder-light">
-            <span>Consulte o endereco e o mapa para planejar sua chegada com tranquilidade.</span>
+            <span>Consulte o endereço e o mapa para planejar sua chegada com tranquilidade.</span>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="section countdown-section">
+    <section id="contagem" class="section countdown-section">
       <div class="container">
         <div class="section-heading reveal">
           <p class="section-kicker">Contagem regressiva</p>
@@ -130,7 +169,7 @@
       <button id="inviteSuccessClose" type="button" class="modal-close" aria-label="Fechar popup">x</button>
       <p class="section-kicker">Resposta registrada</p>
       <h2 id="inviteSuccessTitle" class="panel-title">Obrigada por confirmar sua resposta.</h2>
-      <p id="inviteSuccessBody" class="section-body">Se quiser, voce pode continuar navegando pelo site principal para ver mais detalhes da celebracao.</p>
+      <p id="inviteSuccessBody" class="section-body">Se quiser, você pode continuar navegando pelo site principal para ver mais detalhes da celebração.</p>
       <div class="form-actions">
         <a id="inviteSuccessLink" class="button button-primary" href="index.html">Ir para a landing page</a>
       </div>
@@ -140,7 +179,7 @@
   <footer class="site-footer">
     <div class="container footer-shell">
       <p>Ana &amp; Lucas</p>
-      <p>Esse convite foi preparado com carinho para sua familia.</p>
+      <p>Esse convite foi preparado com carinho para sua família.</p>
     </div>
   </footer>
 

@@ -13,14 +13,53 @@
       <a class="brand-mark" href="#hero" aria-label="Voltar ao topo">
         <span id="headerMonogram">A &amp; L</span>
       </a>
-      <nav class="site-nav" aria-label="Navegacao principal">
+      <div class="header-actions header-actions-public">
+        <nav class="site-nav" aria-label="Navegacao principal">
+          <a href="#historia" data-nav-key="story"></a>
+          <a href="#agenda" data-nav-key="schedule"></a>
+          <a href="#presentes" data-nav-key="gifts"></a>
+          <a href="#local" data-nav-key="location"></a>
+        </nav>
+        <button
+          id="siteNavToggle"
+          class="mobile-nav-toggle"
+          type="button"
+          aria-controls="siteDrawer"
+          aria-expanded="false"
+          aria-label="Abrir menu"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div id="siteDrawerShell" class="site-drawer-shell" hidden>
+    <button id="siteDrawerBackdrop" class="site-drawer-backdrop" type="button" aria-label="Fechar menu"></button>
+    <aside id="siteDrawer" class="site-drawer" tabindex="-1" aria-labelledby="siteDrawerTitle">
+      <div class="site-drawer-head">
+        <div>
+          <p class="section-kicker">Navegação</p>
+          <h2 id="siteDrawerTitle" class="site-drawer-title">Ana &amp; Lucas</h2>
+        </div>
+        <button id="siteDrawerClose" class="site-drawer-close" type="button" aria-label="Fechar menu">×</button>
+      </div>
+
+      <nav class="site-drawer-nav" aria-label="Navegação mobile">
         <a href="#historia" data-nav-key="story"></a>
         <a href="#agenda" data-nav-key="schedule"></a>
         <a href="#presentes" data-nav-key="gifts"></a>
         <a href="#local" data-nav-key="location"></a>
       </nav>
-    </div>
-  </header>
+
+      <div class="site-drawer-actions">
+        <a id="siteDrawerPrimaryCta" class="button button-primary" href="#local"></a>
+        <a id="siteDrawerSecondaryCta" class="button button-secondary button-solid-light" href="#agenda"></a>
+      </div>
+    </aside>
+  </div>
 
   <main>
     <section id="hero" class="hero-section">

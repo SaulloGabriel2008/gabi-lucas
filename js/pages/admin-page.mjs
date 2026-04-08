@@ -27,6 +27,7 @@ import {
   setupRevealAnimations,
   slugify,
   generateReadableInviteSlug,
+  isLegacyRandomInviteSlug,
   summarizeGuests,
   toDateTimeLocalValue,
   localDateTimeToIso
@@ -140,6 +141,7 @@ const dom = {
   giftImageUrl: $("#giftImageUrl"),
   giftIsActive: $("#giftIsActive"),
   giftSubmitButton: $("#giftSubmitButton"),
+  giftDeleteButton: $("#giftDeleteButton"),
   giftResetButton: $("#giftResetButton"),
   giftFormFeedback: $("#giftFormFeedback"),
   giftListSummary: $("#giftListSummary"),
@@ -420,6 +422,57 @@ function familyLabel(family) {
   return family?.displayName || family?.familyName || "Fam\u00EDlia sem nome";
 }
 
+function familySlugList(family) {
+  return Array.isArray(family?.slugAliases) && family.slugAliases.length
+    ? family.slugAliases.filter(Boolean)
+    : [family?.slug].filter(Boolean);
+}
+
+function reservedInviteSlugs(excludeFamilyId = "") {
+  return state.families.flatMap((family) => {
+    if (excludeFamilyId && family.id === excludeFamilyId) {
+      return [];
+    }
+
+    return familySlugList(family);
+  });
+}
+
+function suggestedAutoFamilySlug(existingFamily = null) {
+  const label = normalizeString(dom.familyName.value)
+    || normalizeString(dom.displayName.value)
+    || existingFamily?.familyName
+    || existingFamily?.displayName;
+
+  if (!label) {
+    return "";
+  }
+
+  return generateReadableInviteSlug(label, reservedInviteSlugs(existingFamily?.id));
+}
+
+function resolvedFamilySlug(existingFamily = null) {
+  const manualSlug = slugify(normalizeString(dom.familySlug.value));
+
+  if (state.familySlugEditorVisible) {
+    if (manualSlug) {
+      return manualSlug;
+    }
+
+    if (existingFamily?.slug && !isLegacyRandomInviteSlug(existingFamily.slug)) {
+      return existingFamily.slug;
+    }
+
+    return suggestedAutoFamilySlug(existingFamily);
+  }
+
+  if (existingFamily?.slug && !isLegacyRandomInviteSlug(existingFamily.slug)) {
+    return existingFamily.slug;
+  }
+
+  return suggestedAutoFamilySlug(existingFamily);
+}
+
 function copyText(value) {
   if (navigator.clipboard?.writeText) {
     return navigator.clipboard.writeText(value);
@@ -612,11 +665,12 @@ function syncFamilyFormMode() {
 }
 
 function syncFamilyLinkPreview() {
-  const slug = slugify(
-    normalizeString(dom.familySlug.value)
-      || normalizeString(dom.familyName.value)
-      || normalizeString(dom.displayName.value)
-  );
+  const existingFamily = familyById(normalizeString(dom.familyId.value));
+  const slug = resolvedFamilySlug(existingFamily);
+
+  if (!state.familySlugEditorVisible && (!existingFamily?.slug || isLegacyRandomInviteSlug(existingFamily.slug))) {
+    dom.familySlug.value = slug;
+  }
 
   if (!slug) {
     setText(dom.familyAutoLinkPreview, "O link ser\u00E1 gerado automaticamente.");
@@ -716,7 +770,14 @@ function fillFamilyForm(family) {
   }
 
   dom.isActive.checked = family?.isActive !== false;
-  dom.familySlug.value = family?.slug || "";
+  dom.familySlug.value = family
+    ? (family.slug && !isLegacyRandomInviteSlug(family.slug)
+      ? family.slug
+      : generateReadableInviteSlug(
+        family.familyName || family.displayName,
+        reservedInviteSlugs(family.id)
+      ))
+    : "";
   state.lastSavedInviteUrl = family?.slug ? inviteUrl(family.slug) : "";
   setFamilySlugEditorVisible(false);
   syncFamilyFormMode();
@@ -755,15 +816,7 @@ async function handleFamilySave(event) {
   const displayName = normalizeString(dom.displayName.value);
   const guestNames = readGuestNames();
   const existingFamily = familyById(normalizeString(dom.familyId.value));
-  let slug = "";
-  const inputSlug = normalizeString(dom.familySlug.value);
-  if (inputSlug) {
-    slug = slugify(inputSlug);
-  } else if (existingFamily?.slug) {
-    slug = existingFamily.slug;
-  } else {
-    slug = generateReadableInviteSlug(familyName || displayName);
-  }
+  const slug = resolvedFamilySlug(existingFamily);
 
   if (!familyName || !displayName) {
     setFeedback(dom.familyFormFeedback, "error", "Preencha o nome da fam\u00EDlia e o nome exibido.");
@@ -1558,6 +1611,10 @@ function resetGiftForm() {
   dom.giftPurchaseUrl.value = "";
   dom.giftImageUrl.value = "";
   dom.giftIsActive.checked = true;
+  if (dom.giftDeleteButton) {
+    dom.giftDeleteButton.hidden = true;
+    dom.giftDeleteButton.disabled = false;
+  }
   setFeedback(dom.giftFormFeedback, "", "");
 }
 
@@ -1573,8 +1630,65 @@ function openGiftEditor(giftId) {
   dom.giftPurchaseUrl.value = gift.purchaseUrl || "";
   dom.giftImageUrl.value = gift.imageUrl || "";
   dom.giftIsActive.checked = gift.isActive !== false;
+  if (dom.giftDeleteButton) {
+    dom.giftDeleteButton.hidden = false;
+    dom.giftDeleteButton.disabled = false;
+  }
   setFeedback(dom.giftFormFeedback, "", "");
   setCurrentStep("advanced");
+}
+
+async function handleGiftDelete(giftId, options = {}) {
+  const targetGiftId = normalizeString(giftId);
+  const gift = giftById(targetGiftId);
+  const feedbackElement = options.feedbackElement || dom.giftFormFeedback;
+  const triggerButton = options.triggerButton || null;
+
+  if (!requireActiveAdminSession(feedbackElement)) {
+    return;
+  }
+
+  if (!gift) {
+    setFeedback(feedbackElement, "error", "Esse presente não foi encontrado para exclusão.");
+    return;
+  }
+
+  const confirmed = window.confirm(`Deseja excluir o presente "${gift.name || "sem nome"}"?`);
+
+  if (!confirmed) {
+    return;
+  }
+
+  if (triggerButton) {
+    triggerButton.disabled = true;
+  }
+
+  dom.giftSubmitButton.disabled = true;
+  dom.giftResetButton.disabled = true;
+  setFeedback(dom.giftFormFeedback, "", "");
+
+  try {
+    await deleteGiftItem(gift.id);
+    resetGiftForm();
+    setFeedback(dom.giftFormFeedback, "success", "Presente excluído com sucesso.");
+    setGlobalFeedback("success", "Presente excluído.");
+  } catch (error) {
+    console.error("Erro ao excluir presente:", error);
+    logAdminEvent("error", "Falha ao excluir presente.", {
+      code: error?.code || "",
+      errorMessage: error?.message || "",
+      giftId: gift.id,
+      name: gift.name || ""
+    });
+    const message = friendlyAdminErrorMessage(error, "Não foi possível excluir esse presente agora.");
+    setFeedback(feedbackElement, "error", message);
+  } finally {
+    if (triggerButton) {
+      triggerButton.disabled = false;
+    }
+    dom.giftSubmitButton.disabled = false;
+    dom.giftResetButton.disabled = false;
+  }
 }
 
 async function handleGiftSave(event) {
@@ -2049,6 +2163,12 @@ function initialize() {
   dom.generateAssignmentsButton.addEventListener("click", handleGenerateAssignments);
   dom.seatingSearchInput.addEventListener("input", renderSeatingAssignments);
   dom.giftForm.addEventListener("submit", handleGiftSave);
+  dom.giftDeleteButton?.addEventListener("click", () => {
+    handleGiftDelete(dom.giftId.value, {
+      triggerButton: dom.giftDeleteButton,
+      feedbackElement: dom.giftFormFeedback
+    });
+  });
   dom.giftResetButton.addEventListener("click", openNewGiftEditor);
   dom.siteSettingsForm.addEventListener("submit", handleSiteSave);
   setCurrentStep("families");
