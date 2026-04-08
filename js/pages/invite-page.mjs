@@ -261,6 +261,14 @@ function closeSuccessModal() {
   document.body.classList.remove("has-modal-open");
 }
 
+function resetSuccessModalState() {
+  closeSuccessModal();
+  setText(
+    dom.inviteSuccessBody,
+    "Se quiser, voce pode continuar navegando pelo site principal para ver mais detalhes da celebracao."
+  );
+}
+
 function setupInviteForm() {
   dom.inviteConfirmAllButton.addEventListener("click", () => {
     if (!currentInvite) {
@@ -364,6 +372,10 @@ function setupModal() {
 }
 
 async function initialize() {
+  resetSuccessModalState();
+  window.addEventListener("pageshow", () => {
+    resetSuccessModalState();
+  });
   runtimeConfig = buildRuntimeConfig(await loadSiteSettings().catch(() => null));
   hydrateSharedContent();
   setupInviteForm();
