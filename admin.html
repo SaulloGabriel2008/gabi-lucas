@@ -353,7 +353,6 @@
 
               <div class="form-actions">
                 <button id="giftSubmitButton" type="submit" class="button button-primary">Salvar presente</button>
-                <button id="giftDeleteButton" type="button" class="button button-danger-soft" hidden>Excluir presente</button>
                 <button id="giftResetButton" type="button" class="button button-secondary button-solid-light">Novo presente</button>
               </div>
 
@@ -361,7 +360,29 @@
             </form>
 
             <p id="giftListSummary" class="admin-toolbar-summary"></p>
-            <div id="giftList" class="gift-admin-list"></div>
+            <div id="giftCarousel" class="admin-card-carousel">
+              <div class="admin-card-carousel-controls" aria-label="Navegação da lista de presentes">
+                <button
+                  id="giftCarouselPrev"
+                  type="button"
+                  class="admin-card-carousel-button"
+                  aria-label="Ver presentes anteriores"
+                >
+                  ‹
+                </button>
+                <button
+                  id="giftCarouselNext"
+                  type="button"
+                  class="admin-card-carousel-button"
+                  aria-label="Ver próximos presentes"
+                >
+                  ›
+                </button>
+              </div>
+              <div id="giftListViewport" class="admin-card-carousel-viewport">
+                <div id="giftList" class="gift-admin-list admin-card-carousel-track"></div>
+              </div>
+            </div>
           </div>
 
           <div class="panel admin-flow-stack">

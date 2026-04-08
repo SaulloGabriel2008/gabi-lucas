@@ -1121,10 +1121,28 @@ body.has-drawer-open {
 
 .gift-admin-card {
   overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
 }
 
 .gift-admin-image {
   aspect-ratio: 4 / 3;
+}
+
+.gift-admin-body {
+  min-height: 100%;
+  align-content: start;
+}
+
+.gift-admin-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: auto;
+}
+
+.gift-admin-actions .button {
+  width: 100%;
 }
 
 .table-card {
@@ -1497,6 +1515,12 @@ body.has-drawer-open {
 
 .admin-card-carousel.is-static .admin-card-carousel-controls {
   opacity: 0.38;
+}
+
+#giftCarousel .admin-card-carousel-controls {
+  justify-content: center;
+  margin-right: auto;
+  margin-left: auto;
 }
 
 .admin-card-carousel-viewport {

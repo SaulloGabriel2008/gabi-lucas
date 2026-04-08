@@ -146,6 +146,10 @@ const dom = {
   giftResetButton: $("#giftResetButton"),
   giftFormFeedback: $("#giftFormFeedback"),
   giftListSummary: $("#giftListSummary"),
+  giftCarousel: $("#giftCarousel"),
+  giftCarouselPrev: $("#giftCarouselPrev"),
+  giftCarouselNext: $("#giftCarouselNext"),
+  giftListViewport: $("#giftListViewport"),
   giftList: $("#giftList"),
   siteViewInviteButton: $("#siteViewInviteButton"),
   siteSettingsForm: $("#siteSettingsForm"),
@@ -1837,11 +1841,12 @@ function renderGifts() {
 
   if (!state.gifts.length) {
     dom.giftList.appendChild(emptyState("Nenhum presente cadastrado ainda."));
+    refreshCardCarousels();
     return;
   }
 
   state.gifts.forEach((gift) => {
-    const card = createElement("article", "gift-admin-card");
+    const card = createElement("article", "gift-admin-card admin-record-card");
     const imageShell = createElement("div", "gift-admin-image");
     const image = createElement("img");
     image.src = gift.imageUrl || "";
@@ -1854,32 +1859,10 @@ function renderGifts() {
       createElement("p", "section-body compact-body", gift.isActive === false ? "Oculto na landing" : "Vis\u00EDvel na landing")
     );
 
-    const actions = createElement("div", "inline-actions");
+    const actions = createElement("div", "gift-admin-actions");
     const editButton = createElement("button", "button button-secondary button-solid-light", "Editar");
     editButton.type = "button";
     editButton.addEventListener("click", () => openGiftEditor(gift.id));
-
-    const toggleButton = createElement(
-      "button",
-      "button button-secondary button-solid-light",
-      gift.isActive === false ? "Mostrar" : "Ocultar"
-    );
-    toggleButton.type = "button";
-    toggleButton.addEventListener("click", async () => {
-      try {
-        await saveGiftItem({
-          id: gift.id,
-          sortOrder: gift.sortOrder || Date.now(),
-          name: gift.name || "",
-          purchaseUrl: gift.purchaseUrl || "",
-          imageUrl: gift.imageUrl || "",
-          isActive: gift.isActive === false
-        });
-        setGlobalFeedback("success", "Visibilidade do presente atualizada.");
-      } catch {
-        setGlobalFeedback("error", "N\u00E3o foi poss\u00EDvel atualizar esse presente agora.");
-      }
-    });
 
     const deleteButton = createElement("button", "button button-danger-soft", "Excluir");
     deleteButton.type = "button";
@@ -1890,11 +1873,13 @@ function renderGifts() {
       });
     });
 
-    actions.append(editButton, toggleButton, deleteButton);
+    actions.append(editButton, deleteButton);
     body.appendChild(actions);
     card.append(imageShell, body);
     dom.giftList.appendChild(card);
   });
+
+  refreshCardCarousels();
 }
 
 async function loadRemoteSiteSettings() {
@@ -2165,6 +2150,13 @@ function initialize() {
     dom.confirmationsCarouselPrev,
     dom.confirmationsCarouselNext
   );
+  registerCarousel(
+    dom.giftCarousel,
+    dom.giftListViewport,
+    dom.giftList,
+    dom.giftCarouselPrev,
+    dom.giftCarouselNext
+  );
   dom.adminPrimaryActionButton.addEventListener("click", primaryStepAction);
   dom.adminPreviewInviteButton.addEventListener("click", openInvitePreview);
   dom.siteViewInviteButton.addEventListener("click", openInvitePreview);
@@ -2244,12 +2236,6 @@ function initialize() {
   dom.generateAssignmentsButton.addEventListener("click", handleGenerateAssignments);
   dom.seatingSearchInput.addEventListener("input", renderSeatingAssignments);
   dom.giftForm.addEventListener("submit", handleGiftSave);
-  dom.giftDeleteButton?.addEventListener("click", () => {
-    handleGiftDeleteSimple(dom.giftId.value, {
-      triggerButton: dom.giftDeleteButton,
-      feedbackElement: dom.giftFormFeedback
-    });
-  });
   dom.giftResetButton.addEventListener("click", openNewGiftEditor);
   dom.siteSettingsForm.addEventListener("submit", handleSiteSave);
   syncGiftFormActions();
