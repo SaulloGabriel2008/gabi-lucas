@@ -490,6 +490,21 @@ button {
   color: var(--color-error);
 }
 
+.admin-diagnostic-card {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  background: rgba(255, 248, 210, 0.14);
+  border: 1px solid rgba(255, 236, 160, 0.18);
+}
+
+.admin-diagnostic-card p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
 .gift-item {
   padding: 1.25rem 1.2rem;
   transition: transform var(--transition-soft), background-color var(--transition-soft);
@@ -1743,6 +1758,12 @@ button {
   color: #ff9b85;
 }
 
+.admin-body .admin-diagnostic-card {
+  background: rgba(255, 168, 120, 0.08);
+  border-color: rgba(255, 168, 120, 0.22);
+  color: rgba(255, 255, 255, 0.82);
+}
+
 .admin-body .button-light-outline {
   border-color: rgba(255, 255, 255, 0.3);
   color: #fff;
@@ -1751,4 +1772,3 @@ button {
 .admin-body .button-light-outline:hover {
   background: rgba(255, 255, 255, 0.1);
 }
-

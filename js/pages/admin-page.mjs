@@ -6,6 +6,7 @@ import {
   loadSiteSettings,
   loginAdmin,
   logoutAdmin,
+  normalizeAdminEmail,
   observeAuthState,
   saveFamily,
   saveGiftItem,
@@ -69,6 +70,7 @@ const dom = {
   adminLoginForm: $("#adminLoginForm"),
   adminLoginButton: $("#adminLoginButton"),
   adminLoginFeedback: $("#adminLoginFeedback"),
+  adminLoginDiagnostic: $("#adminLoginDiagnostic"),
   adminLogoutButton: $("#adminLogoutButton"),
   adminPreviewInviteButton: $("#adminPreviewInviteButton"),
   adminPrimaryActionButton: $("#adminPrimaryActionButton"),
@@ -216,16 +218,56 @@ function setGlobalFeedback(type, message) {
   setFeedback(dom.adminGlobalFeedback, type, message);
 }
 
-function showLoggedOutState(message = "") {
+function clearLoginDiagnostic() {
+  if (!dom.adminLoginDiagnostic) {
+    return;
+  }
+
+  dom.adminLoginDiagnostic.hidden = true;
+  dom.adminLoginDiagnostic.innerHTML = "";
+}
+
+function renderLoginDiagnostic(details) {
+  if (!dom.adminLoginDiagnostic) {
+    return;
+  }
+
+  if (!details) {
+    clearLoginDiagnostic();
+    return;
+  }
+
+  const items = [
+    details.email ? `Email autenticado: ${details.email}` : "",
+    details.uid ? `UID autenticado: ${details.uid}` : "",
+    details.uidPath
+      ? `Cadastro por UID: ${details.uidPath}${details.uidFound ? details.uidActive ? " (ativo)" : " (encontrado, mas inativo)" : " (n\u00e3o encontrado)"}`
+      : "",
+    details.emailPath
+      ? `Cadastro por e-mail: ${details.emailPath}${details.emailFound ? details.emailActive ? " (ativo)" : " (encontrado, mas inativo)" : " (n\u00e3o encontrado)"}`
+      : "",
+    details.help || ""
+  ].filter(Boolean);
+
+  dom.adminLoginDiagnostic.innerHTML = "";
+  items.forEach((item) => {
+    dom.adminLoginDiagnostic.appendChild(createElement("p", "", item));
+  });
+  dom.adminLoginDiagnostic.hidden = items.length === 0;
+}
+
+function showLoggedOutState(message = "", diagnostic = null) {
   dom.adminLoginSection.hidden = false;
   dom.adminDashboardSection.hidden = true;
   setFeedback(dom.adminLoginFeedback, message ? "error" : "", message);
+  renderLoginDiagnostic(diagnostic);
 }
 
 function showLoggedInState() {
   dom.adminLoginSection.hidden = true;
   dom.adminDashboardSection.hidden = false;
   setFeedback(dom.adminLoginFeedback, "", "");
+  clearLoginDiagnostic();
 }
 
 function setLoginBusy(isBusy) {
@@ -264,6 +306,20 @@ function getAdminLoginErrorMessage(error) {
     return "Esse usuário ainda não foi criado no Firebase Authentication.";
   }
   return defaultSiteConfig.adminSite.login.errorMessage;
+}
+
+function adminAccessDiagnostic(user, lookup = {}, help = "") {
+  return {
+    email: normalizeAdminEmail(user?.email),
+    uid: normalizeString(user?.uid),
+    uidPath: lookup.uidPath || (user?.uid ? `admins/${normalizeString(user.uid)}` : ""),
+    emailPath: lookup.emailPath || (user?.email ? `adminEmails/${normalizeAdminEmail(user.email)}` : ""),
+    uidFound: Boolean(lookup.uidFound),
+    emailFound: Boolean(lookup.emailFound),
+    uidActive: Boolean(lookup.uidActive),
+    emailActive: Boolean(lookup.emailActive),
+    help
+  };
 }
 
 function familyById(familyId) {
@@ -1538,34 +1594,43 @@ async function syncAdminState(user) {
   }
 
   try {
-    const profile = await loadAdminProfile(user);
+    const adminState = await loadAdminProfile(user);
+    const lookup = adminState?.lookedUp || {};
 
-    if (!profile?.active) {
-      await logoutAdmin();
-      showLoggedOutState("Seu acesso ainda não está ativo no cadastro de admins.");
+    if (!adminState?.active || !adminState?.profile) {
+      const hasInactiveRegistration = lookup.uidFound || lookup.emailFound;
+      const help = hasInactiveRegistration
+        ? "Ative o cadastro encontrado no Firestore definindo active = true."
+        : "Cadastre este acesso em admins/{uid} ou em adminEmails/{email_normalizado} com active = true.";
+      showLoggedOutState(
+        hasInactiveRegistration
+          ? "Seu acesso existe, mas ainda nao esta ativo no cadastro de admins."
+          : "Seu usuario autenticou, mas ainda nao possui permissao de admin.",
+        adminAccessDiagnostic(user, lookup, help)
+      );
       return;
     }
 
     state.user = user;
-    state.profile = profile;
-    console.log("-----------------------------------------");
-    console.log("DIAGNÓSTICO ADMIN:");
-    console.log("UID:", user.uid);
-    console.log("Email:", user.email);
-    console.log("Profile Active:", profile?.active);
-    console.log("-----------------------------------------");
+    state.profile = adminState.profile;
     showLoggedInState();
     await loadRemoteSiteSettings();
     startSubscriptions();
     renderAll();
-  } catch {
-    try {
-      await logoutAdmin();
-    } catch {
-      // Sem ação adicional.
-    }
-
-    showLoggedOutState("Não foi possível validar as permissões do painel agora.");
+  } catch (error) {
+    const permissionDenied = error?.code === "permission-denied" || String(error?.message || "").toLowerCase().includes("permission");
+    showLoggedOutState(
+      permissionDenied
+        ? "O login funcionou, mas o Firestore ainda esta bloqueando este acesso."
+        : "Nao foi possivel validar as permissoes do painel agora.",
+      adminAccessDiagnostic(
+        user,
+        {},
+        permissionDenied
+          ? "Publique as regras atualizadas do Firestore e confira se existe admins/{uid} ou adminEmails/{email_normalizado} ativo."
+          : "Confira a conexao com o Firebase e tente novamente."
+      )
+    );
   }
 }
 
@@ -1593,6 +1658,7 @@ function initialize() {
     event.preventDefault();
     setLoginBusy(true);
     setFeedback(dom.adminLoginFeedback, "", "");
+    clearLoginDiagnostic();
 
     try {
       await loginAdmin(dom.adminEmail.value, dom.adminPassword.value);

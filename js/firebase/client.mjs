@@ -63,6 +63,19 @@ function normalizeGuestStatus(status) {
   return "pending";
 }
 
+export function normalizeAdminEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function mapAdminProfile(snapshot, source, key) {
+  return {
+    id: snapshot.id,
+    ...snapshot.data(),
+    source,
+    lookupKey: key || snapshot.id
+  };
+}
+
 async function loadGuestsForFamily(familyId) {
   const snapshot = await getDb()
     .collection("families")
@@ -88,7 +101,7 @@ export async function loginAdmin(email, password) {
   const firebase = getFirebaseNamespace();
 
   await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-  return auth.signInWithEmailAndPassword(String(email || "").trim(), String(password || ""));
+  return auth.signInWithEmailAndPassword(normalizeAdminEmail(email), String(password || ""));
 }
 
 export async function logoutAdmin() {
@@ -100,12 +113,43 @@ export function observeAuthState(callback) {
 }
 
 export async function loadAdminProfile(user) {
-  if (!user?.uid) {
+  if (!user?.uid && !user?.email) {
     return null;
   }
 
-  const snapshot = await getDb().collection("admins").doc(user.uid).get();
-  return snapshot.exists ? { id: snapshot.id, ...snapshot.data() } : null;
+  const uid = String(user?.uid || "").trim();
+  const email = normalizeAdminEmail(user?.email);
+  const uidRef = uid ? getDb().collection("admins").doc(uid) : null;
+  const emailRef = email ? getDb().collection("adminEmails").doc(email) : null;
+  const [uidSnapshot, emailSnapshot] = await Promise.all([
+    uidRef ? uidRef.get() : Promise.resolve(null),
+    emailRef ? emailRef.get() : Promise.resolve(null)
+  ]);
+
+  const uidProfile = uidSnapshot?.exists ? mapAdminProfile(uidSnapshot, "uid", uid) : null;
+  const emailProfile = emailSnapshot?.exists ? mapAdminProfile(emailSnapshot, "email", email) : null;
+  const activeProfile = [uidProfile, emailProfile].find((profile) => profile?.active === true || profile?.active === "true") || null;
+  const inactiveProfile = uidProfile || emailProfile || null;
+
+  return {
+    active: Boolean(activeProfile),
+    profile: activeProfile || inactiveProfile,
+    source: activeProfile?.source || inactiveProfile?.source || null,
+    lookedUp: {
+      uid,
+      email,
+      uidPath: uid ? `admins/${uid}` : "",
+      emailPath: email ? `adminEmails/${email}` : "",
+      uidFound: Boolean(uidProfile),
+      emailFound: Boolean(emailProfile),
+      uidActive: Boolean(uidProfile && (uidProfile.active === true || uidProfile.active === "true")),
+      emailActive: Boolean(emailProfile && (emailProfile.active === true || emailProfile.active === "true"))
+    },
+    profiles: {
+      uid: uidProfile,
+      email: emailProfile
+    }
+  };
 }
 
 export async function loadSiteSettings() {
