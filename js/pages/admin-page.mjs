@@ -80,6 +80,7 @@ const dom = {
   adminProgressLabel: $("#adminProgressLabel"),
   adminHeaderSummary: $("#adminHeaderSummary"),
   adminGlobalFeedback: $("#adminGlobalFeedback"),
+  adminStepTabs: $("#adminStepTabs"),
   stepButtons: $$(".admin-flow-step"),
   stepPanels: $$("[data-step-panel]"),
   familySearchInput: $("#familySearchInput"),
@@ -564,7 +565,10 @@ function renderChrome() {
   setText(dom.adminStepDescription, step.description);
   setText(dom.adminPrimaryActionButton, step.primaryLabel);
   dom.stepButtons.forEach((button) => {
-    button.classList.toggle("is-active", button.dataset.step === state.step);
+    const isActive = button.dataset.step === state.step;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+    button.setAttribute("aria-current", isActive ? "step" : "false");
   });
   dom.stepPanels.forEach((panel) => {
     panel.hidden = panel.dataset.stepPanel !== state.step;
@@ -1605,16 +1609,27 @@ function openNewGiftEditor() {
   setCurrentStep("advanced");
 }
 
+function syncGiftFormActions() {
+  const isEditing = Boolean(normalizeString(dom.giftId.value));
+
+  if (dom.giftDeleteButton) {
+    dom.giftDeleteButton.hidden = !isEditing;
+    dom.giftDeleteButton.disabled = false;
+    setText(dom.giftDeleteButton, "Excluir este presente");
+  }
+
+  if (dom.giftResetButton) {
+    setText(dom.giftResetButton, isEditing ? "Cancelar edição" : "Novo presente");
+  }
+}
+
 function resetGiftForm() {
   dom.giftId.value = "";
   dom.giftName.value = "";
   dom.giftPurchaseUrl.value = "";
   dom.giftImageUrl.value = "";
   dom.giftIsActive.checked = true;
-  if (dom.giftDeleteButton) {
-    dom.giftDeleteButton.hidden = true;
-    dom.giftDeleteButton.disabled = false;
-  }
+  syncGiftFormActions();
   setFeedback(dom.giftFormFeedback, "", "");
 }
 
@@ -1630,10 +1645,7 @@ function openGiftEditor(giftId) {
   dom.giftPurchaseUrl.value = gift.purchaseUrl || "";
   dom.giftImageUrl.value = gift.imageUrl || "";
   dom.giftIsActive.checked = gift.isActive !== false;
-  if (dom.giftDeleteButton) {
-    dom.giftDeleteButton.hidden = false;
-    dom.giftDeleteButton.disabled = false;
-  }
+  syncGiftFormActions();
   setFeedback(dom.giftFormFeedback, "", "");
   setCurrentStep("advanced");
 }
@@ -1688,6 +1700,72 @@ async function handleGiftDelete(giftId, options = {}) {
     }
     dom.giftSubmitButton.disabled = false;
     dom.giftResetButton.disabled = false;
+  }
+}
+
+async function handleGiftDeleteSimple(giftId, options = {}) {
+  const targetGiftId = normalizeString(giftId);
+  const gift = giftById(targetGiftId);
+  const feedbackElement = options.feedbackElement || dom.giftFormFeedback;
+  const triggerButton = options.triggerButton || null;
+  const isEditingCurrentGift = normalizeString(dom.giftId.value) === targetGiftId;
+
+  if (!requireActiveAdminSession(feedbackElement)) {
+    return;
+  }
+
+  if (!gift) {
+    setFeedback(feedbackElement, "error", "Esse presente não foi encontrado.");
+    return;
+  }
+
+  const confirmed = window.confirm(`Excluir o presente "${gift.name || "sem nome"}"?`);
+
+  if (!confirmed) {
+    return;
+  }
+
+  if (triggerButton) {
+    triggerButton.disabled = true;
+  }
+
+  dom.giftSubmitButton.disabled = true;
+  dom.giftResetButton.disabled = true;
+
+  if (dom.giftDeleteButton) {
+    dom.giftDeleteButton.disabled = true;
+  }
+
+  setFeedback(dom.giftFormFeedback, "", "");
+  setFeedback(feedbackElement, "", "");
+
+  try {
+    await deleteGiftItem(gift.id);
+
+    if (isEditingCurrentGift) {
+      resetGiftForm();
+      setFeedback(dom.giftFormFeedback, "success", "Presente excluído com sucesso.");
+    }
+
+    setGlobalFeedback("success", `Presente "${gift.name || "sem nome"}" excluído.`);
+  } catch (error) {
+    console.error("Erro ao excluir presente:", error);
+    logAdminEvent("error", "Falha ao excluir presente.", {
+      code: error?.code || "",
+      errorMessage: error?.message || "",
+      giftId: gift.id,
+      name: gift.name || ""
+    });
+    const message = friendlyAdminErrorMessage(error, "Não foi possível excluir esse presente agora.");
+    setFeedback(feedbackElement, "error", message);
+  } finally {
+    if (triggerButton) {
+      triggerButton.disabled = false;
+    }
+
+    dom.giftSubmitButton.disabled = false;
+    dom.giftResetButton.disabled = false;
+    syncGiftFormActions();
   }
 }
 
@@ -1803,19 +1881,13 @@ function renderGifts() {
       }
     });
 
-    const deleteButton = createElement("button", "button button-secondary button-solid-light", "Excluir");
+    const deleteButton = createElement("button", "button button-danger-soft", "Excluir");
     deleteButton.type = "button";
-    deleteButton.addEventListener("click", async () => {
-      if (!window.confirm("Deseja excluir este presente?")) {
-        return;
-      }
-
-      try {
-        await deleteGiftItem(gift.id);
-        setGlobalFeedback("success", "Presente exclu\u00EDdo.");
-      } catch {
-        setGlobalFeedback("error", "N\u00E3o foi poss\u00EDvel excluir esse presente agora.");
-      }
+    deleteButton.addEventListener("click", () => {
+      handleGiftDeleteSimple(gift.id, {
+        triggerButton: deleteButton,
+        feedbackElement: dom.adminGlobalFeedback
+      });
     });
 
     actions.append(editButton, toggleButton, deleteButton);
@@ -2062,6 +2134,17 @@ function setCurrentStep(step) {
   renderChrome();
 }
 
+function handleStepTabClick(event) {
+  const button = event.target instanceof Element ? event.target.closest(".admin-flow-step") : null;
+
+  if (!button) {
+    return;
+  }
+
+  event.preventDefault();
+  setCurrentStep(button.dataset.step);
+}
+
 function initialize() {
   hydrateLoginCopy();
   openNewFamilyEditor();
@@ -2085,9 +2168,7 @@ function initialize() {
   dom.adminPrimaryActionButton.addEventListener("click", primaryStepAction);
   dom.adminPreviewInviteButton.addEventListener("click", openInvitePreview);
   dom.siteViewInviteButton.addEventListener("click", openInvitePreview);
-  dom.stepButtons.forEach((button) => {
-    button.addEventListener("click", () => setCurrentStep(button.dataset.step));
-  });
+  dom.adminStepTabs?.addEventListener("click", handleStepTabClick);
   dom.adminLoginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     setLoginBusy(true);
@@ -2164,13 +2245,14 @@ function initialize() {
   dom.seatingSearchInput.addEventListener("input", renderSeatingAssignments);
   dom.giftForm.addEventListener("submit", handleGiftSave);
   dom.giftDeleteButton?.addEventListener("click", () => {
-    handleGiftDelete(dom.giftId.value, {
+    handleGiftDeleteSimple(dom.giftId.value, {
       triggerButton: dom.giftDeleteButton,
       feedbackElement: dom.giftFormFeedback
     });
   });
   dom.giftResetButton.addEventListener("click", openNewGiftEditor);
   dom.siteSettingsForm.addEventListener("submit", handleSiteSave);
+  syncGiftFormActions();
   setCurrentStep("families");
   showLoggedOutState();
   setupRevealAnimations();

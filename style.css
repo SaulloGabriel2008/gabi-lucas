@@ -1833,21 +1833,18 @@ body.has-drawer-open {
   }
 
   .admin-flow-steps {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 0.65rem;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-
-  .admin-flow-steps::-webkit-scrollbar {
-    display: none;
+    display: grid;
+    grid-template-columns: minmax(0, 18rem);
+    justify-content: center;
+    gap: 0.85rem;
+    padding: 0.9rem;
   }
 
   .admin-flow-step {
-    min-width: 11rem;
-    white-space: nowrap;
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+    text-align: center;
   }
 
   .admin-step-heading,
@@ -2101,16 +2098,22 @@ body.has-drawer-open {
   flex-wrap: wrap;
   gap: 0.75rem;
   padding: 0.75rem;
+  justify-content: center;
 }
 
 .admin-flow-step {
   appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 3rem;
   padding: 0.75rem 1rem;
   border: 1px solid rgba(42, 39, 20, 0.12);
   border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.72);
   color: var(--color-deep);
+  text-align: center;
+  touch-action: manipulation;
   transition:
     transform var(--transition-soft),
     background-color var(--transition-soft),
