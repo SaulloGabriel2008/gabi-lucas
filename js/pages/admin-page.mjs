@@ -246,6 +246,8 @@ function renderLoginDiagnostic(details) {
     details.emailPath
       ? `Cadastro por e-mail: ${details.emailPath}${details.emailFound ? details.emailActive ? " (ativo)" : " (encontrado, mas inativo)" : " (n\u00e3o encontrado)"}`
       : "",
+    details.uidLookupError ? `Erro ao consultar UID: ${details.uidLookupError}` : "",
+    details.emailLookupError ? `Erro ao consultar e-mail: ${details.emailLookupError}` : "",
     details.help || ""
   ].filter(Boolean);
 
@@ -318,8 +320,40 @@ function adminAccessDiagnostic(user, lookup = {}, help = "") {
     emailFound: Boolean(lookup.emailFound),
     uidActive: Boolean(lookup.uidActive),
     emailActive: Boolean(lookup.emailActive),
+    uidLookupError: lookup.uidLookupError || "",
+    emailLookupError: lookup.emailLookupError || "",
     help
   };
+}
+
+function logAdminEvent(level, message, details = {}) {
+  const payload = {
+    at: new Date().toISOString(),
+    step: state.step,
+    userUid: state.user?.uid || normalizeString(details?.uid),
+    userEmail: state.user?.email || normalizeAdminEmail(details?.email),
+    ...details
+  };
+
+  if (level === "error") {
+    console.error(`[admin] ${message}`, payload);
+    return;
+  }
+
+  if (level === "warn") {
+    console.warn(`[admin] ${message}`, payload);
+    return;
+  }
+
+  console.info(`[admin] ${message}`, payload);
+}
+
+function friendlyAdminErrorMessage(error, fallbackMessage) {
+  if (error?.code === "permission-denied") {
+    return "O Firestore recusou esta ação por permissão. Confira o cadastro admin e as regras publicadas.";
+  }
+
+  return error?.message || fallbackMessage;
 }
 
 function familyById(familyId) {
@@ -732,10 +766,16 @@ async function handleFamilySave(event) {
     setGlobalFeedback("success", "Convite salvo. Você já pode copiar o link e enviar.");
   } catch (error) {
     console.error("Erro ao salvar convite:", error);
+    logAdminEvent("error", "Falha ao salvar convite.", {
+      code: error?.code || "",
+      errorMessage: error?.message || "",
+      familyId: normalizeString(dom.familyId.value),
+      slug
+    });
     if (error?.code === "family/slug-already-exists") {
       setFeedback(dom.familyFormFeedback, "error", "Já existe um convite com esse link. Clique em 'Editar link' e escolha outro.");
     } else {
-      const message = error?.message || "Não foi possível salvar este convite agora.";
+      const message = friendlyAdminErrorMessage(error, "Não foi possível salvar este convite agora.");
       setFeedback(dom.familyFormFeedback, "error", message);
     }
   } finally {
@@ -991,7 +1031,13 @@ async function handleTableSave(event) {
     openNewTableEditor();
   } catch (error) {
     console.error("Erro ao salvar mesa:", error);
-    const message = error?.message || "Não foi possível salvar esta mesa agora.";
+    logAdminEvent("error", "Falha ao salvar mesa.", {
+      code: error?.code || "",
+      errorMessage: error?.message || "",
+      tableId: normalizeString(dom.tableId.value),
+      name
+    });
+    const message = friendlyAdminErrorMessage(error, "Não foi possível salvar esta mesa agora.");
     setFeedback(dom.tableFormFeedback, "error", message);
   } finally {
     dom.tableSubmitButton.disabled = false;
@@ -1361,7 +1407,13 @@ async function handleGiftSave(event) {
     openNewGiftEditor();
   } catch (error) {
     console.error("Erro ao salvar presente:", error);
-    const message = error?.message || "Não foi possível salvar esse presente agora.";
+    logAdminEvent("error", "Falha ao salvar presente.", {
+      code: error?.code || "",
+      errorMessage: error?.message || "",
+      giftId: normalizeString(dom.giftId.value),
+      name
+    });
+    const message = friendlyAdminErrorMessage(error, "Não foi possível salvar esse presente agora.");
     setFeedback(dom.giftFormFeedback, "error", message);
   } finally {
     dom.giftSubmitButton.disabled = false;
@@ -1491,7 +1543,11 @@ async function handleSiteSave(event) {
     setGlobalFeedback("success", "Conteúdo do site atualizado.");
   } catch (error) {
     console.error("Erro ao salvar configurações do site:", error);
-    const message = error?.message || "Não foi possível salvar as informações do site agora.";
+    logAdminEvent("error", "Falha ao salvar configuracoes do site.", {
+      code: error?.code || "",
+      errorMessage: error?.message || ""
+    });
+    const message = friendlyAdminErrorMessage(error, "Não foi possível salvar as informações do site agora.");
     setFeedback(dom.siteSettingsFeedback, "error", message);
   } finally {
     dom.siteSettingsSubmitButton.disabled = false;
@@ -1596,12 +1652,23 @@ async function syncAdminState(user) {
   try {
     const adminState = await loadAdminProfile(user);
     const lookup = adminState?.lookedUp || {};
+    logAdminEvent("info", "Autenticacao reconhecida, validando acesso admin.", {
+      uid: user?.uid,
+      email: user?.email,
+      lookup
+    });
 
     if (!adminState?.active || !adminState?.profile) {
       const hasInactiveRegistration = lookup.uidFound || lookup.emailFound;
       const help = hasInactiveRegistration
         ? "Ative o cadastro encontrado no Firestore definindo active = true."
         : "Cadastre este acesso em admins/{uid} ou em adminEmails/{email_normalizado} com active = true.";
+      logAdminEvent("warn", "Usuario autenticado sem permissao admin ativa.", {
+        uid: user?.uid,
+        email: user?.email,
+        lookup,
+        help
+      });
       showLoggedOutState(
         hasInactiveRegistration
           ? "Seu acesso existe, mas ainda nao esta ativo no cadastro de admins."
@@ -1613,12 +1680,24 @@ async function syncAdminState(user) {
 
     state.user = user;
     state.profile = adminState.profile;
+    logAdminEvent("info", "Acesso admin liberado.", {
+      uid: user?.uid,
+      email: user?.email,
+      source: adminState.source,
+      lookup
+    });
     showLoggedInState();
     await loadRemoteSiteSettings();
     startSubscriptions();
     renderAll();
   } catch (error) {
     const permissionDenied = error?.code === "permission-denied" || String(error?.message || "").toLowerCase().includes("permission");
+    logAdminEvent("error", "Falha ao validar permissoes do admin.", {
+      uid: user?.uid,
+      email: user?.email,
+      code: error?.code || "",
+      errorMessage: error?.message || ""
+    });
     showLoggedOutState(
       permissionDenied
         ? "O login funcionou, mas o Firestore ainda esta bloqueando este acesso."
@@ -1659,10 +1738,21 @@ function initialize() {
     setLoginBusy(true);
     setFeedback(dom.adminLoginFeedback, "", "");
     clearLoginDiagnostic();
+    logAdminEvent("info", "Tentativa de login iniciada.", {
+      email: dom.adminEmail.value
+    });
 
     try {
       await loginAdmin(dom.adminEmail.value, dom.adminPassword.value);
+      logAdminEvent("info", "Credenciais aceitas pelo Firebase Auth.", {
+        email: dom.adminEmail.value
+      });
     } catch (error) {
+      logAdminEvent("error", "Falha no login via Firebase Auth.", {
+        email: dom.adminEmail.value,
+        code: error?.code || "",
+        errorMessage: error?.message || ""
+      });
       setFeedback(dom.adminLoginFeedback, "error", getAdminLoginErrorMessage(error));
     } finally {
       setLoginBusy(false);

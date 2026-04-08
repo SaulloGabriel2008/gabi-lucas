@@ -121,10 +121,13 @@ export async function loadAdminProfile(user) {
   const email = normalizeAdminEmail(user?.email);
   const uidRef = uid ? getDb().collection("admins").doc(uid) : null;
   const emailRef = email ? getDb().collection("adminEmails").doc(email) : null;
-  const [uidSnapshot, emailSnapshot] = await Promise.all([
+  const [uidResult, emailResult] = await Promise.allSettled([
     uidRef ? uidRef.get() : Promise.resolve(null),
     emailRef ? emailRef.get() : Promise.resolve(null)
   ]);
+
+  const uidSnapshot = uidResult.status === "fulfilled" ? uidResult.value : null;
+  const emailSnapshot = emailResult.status === "fulfilled" ? emailResult.value : null;
 
   const uidProfile = uidSnapshot?.exists ? mapAdminProfile(uidSnapshot, "uid", uid) : null;
   const emailProfile = emailSnapshot?.exists ? mapAdminProfile(emailSnapshot, "email", email) : null;
@@ -143,7 +146,9 @@ export async function loadAdminProfile(user) {
       uidFound: Boolean(uidProfile),
       emailFound: Boolean(emailProfile),
       uidActive: Boolean(uidProfile && (uidProfile.active === true || uidProfile.active === "true")),
-      emailActive: Boolean(emailProfile && (emailProfile.active === true || emailProfile.active === "true"))
+      emailActive: Boolean(emailProfile && (emailProfile.active === true || emailProfile.active === "true")),
+      uidLookupError: uidResult.status === "rejected" ? uidResult.reason?.code || uidResult.reason?.message || "lookup-failed" : "",
+      emailLookupError: emailResult.status === "rejected" ? emailResult.reason?.code || emailResult.reason?.message || "lookup-failed" : ""
     },
     profiles: {
       uid: uidProfile,

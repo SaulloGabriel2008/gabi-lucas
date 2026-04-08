@@ -70,7 +70,12 @@ service cloud.firestore {
     }
 
     match /adminEmails/{emailId} {
-      allow get, list: if isAdmin();
+      allow get: if isAdmin() || (
+        isSignedIn()
+        && request.auth.token.email is string
+        && normalizedEmail() == emailId
+      );
+      allow list: if isAdmin();
       allow create, update, delete: if isAdmin();
     }
 
