@@ -356,6 +356,28 @@ function friendlyAdminErrorMessage(error, fallbackMessage) {
   return error?.message || fallbackMessage;
 }
 
+function hasActiveAdminSession() {
+  return Boolean(
+    state.user?.uid
+    && state.profile
+    && (state.profile.active === true || state.profile.active === "true")
+  );
+}
+
+function requireActiveAdminSession(feedbackElement) {
+  if (hasActiveAdminSession()) {
+    return true;
+  }
+
+  logAdminEvent("warn", "Acao bloqueada porque nao existe sessao admin ativa.", {});
+  setFeedback(
+    feedbackElement,
+    "error",
+    "Seu login existe, mas o painel ainda nao reconheceu uma permissao admin ativa para este usuario."
+  );
+  return false;
+}
+
 function familyById(familyId) {
   return state.families.find((family) => family.id === familyId) || null;
 }
@@ -696,6 +718,10 @@ function openFamilyEditor(familyId) {
 async function handleFamilySave(event) {
   event.preventDefault();
 
+  if (!requireActiveAdminSession(dom.familyFormFeedback)) {
+    return;
+  }
+
   const familyName = normalizeString(dom.familyName.value);
   const displayName = normalizeString(dom.displayName.value);
   const guestNames = readGuestNames();
@@ -1003,6 +1029,10 @@ function openTableEditor(tableId) {
 
 async function handleTableSave(event) {
   event.preventDefault();
+
+  if (!requireActiveAdminSession(dom.tableFormFeedback)) {
+    return;
+  }
 
   const name = normalizeString(dom.tableName.value);
   const capacity = Number(dom.tableCapacity.value || 0);
@@ -1369,6 +1399,10 @@ function openGiftEditor(giftId) {
 async function handleGiftSave(event) {
   event.preventDefault();
 
+  if (!requireActiveAdminSession(dom.giftFormFeedback)) {
+    return;
+  }
+
   const name = normalizeString(dom.giftName.value);
   const purchaseUrl = normalizeString(dom.giftPurchaseUrl.value);
   const imageUrl = normalizeString(dom.giftImageUrl.value);
@@ -1514,6 +1548,10 @@ async function loadRemoteSiteSettings() {
 
 async function handleSiteSave(event) {
   event.preventDefault();
+
+  if (!requireActiveAdminSession(dom.siteSettingsFeedback)) {
+    return;
+  }
 
   const payload = sitePayloadFromForm();
 
@@ -1663,6 +1701,9 @@ async function syncAdminState(user) {
       const help = hasInactiveRegistration
         ? "Ative o cadastro encontrado no Firestore definindo active = true."
         : "Cadastre este acesso em admins/{uid} ou em adminEmails/{email_normalizado} com active = true.";
+      state.user = null;
+      state.profile = null;
+      stopSubscriptions();
       logAdminEvent("warn", "Usuario autenticado sem permissao admin ativa.", {
         uid: user?.uid,
         email: user?.email,
@@ -1691,6 +1732,9 @@ async function syncAdminState(user) {
     startSubscriptions();
     renderAll();
   } catch (error) {
+    state.user = null;
+    state.profile = null;
+    stopSubscriptions();
     const permissionDenied = error?.code === "permission-denied" || String(error?.message || "").toLowerCase().includes("permission");
     logAdminEvent("error", "Falha ao validar permissoes do admin.", {
       uid: user?.uid,
@@ -1743,10 +1787,11 @@ function initialize() {
     });
 
     try {
-      await loginAdmin(dom.adminEmail.value, dom.adminPassword.value);
+      const credential = await loginAdmin(dom.adminEmail.value, dom.adminPassword.value);
       logAdminEvent("info", "Credenciais aceitas pelo Firebase Auth.", {
         email: dom.adminEmail.value
       });
+      await syncAdminState(credential?.user || null);
     } catch (error) {
       logAdminEvent("error", "Falha no login via Firebase Auth.", {
         email: dom.adminEmail.value,
