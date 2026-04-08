@@ -2011,6 +2011,68 @@ button {
   color: #ffe7e1;
 }
 
+.admin-body .admin-record-card,
+.admin-body .table-card,
+.admin-body .assignment-row,
+.admin-body .gift-admin-card,
+.admin-body .empty-state-card {
+  color: var(--color-deep);
+}
+
+.admin-body .admin-record-card .section-body,
+.admin-body .table-card .section-body,
+.admin-body .assignment-row .section-body,
+.admin-body .gift-admin-card .section-body,
+.admin-body .empty-state-card .section-body,
+.admin-body .admin-record-card .family-stat span,
+.admin-body .table-card .family-stat span,
+.admin-body .assignment-row span,
+.admin-body .gift-admin-card span,
+.admin-body .admin-record-card .family-link-label,
+.admin-body .table-card .family-link-label,
+.admin-body .assignment-row .family-link-label,
+.admin-body .gift-admin-card .family-link-label,
+.admin-body .table-card .occupancy-badge {
+  color: rgba(42, 39, 20, 0.72);
+}
+
+.admin-body .admin-record-card .family-link-box,
+.admin-body .table-card .family-link-box,
+.admin-body .assignment-row .family-link-box,
+.admin-body .gift-admin-card .family-link-box,
+.admin-body .empty-state-card .family-link-box {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(42, 39, 20, 0.1);
+  color: var(--color-deep);
+}
+
+.admin-body .admin-record-card .family-stat,
+.admin-body .table-card .family-stat,
+.admin-body .assignment-row .family-stat,
+.admin-body .gift-admin-card .family-stat,
+.admin-body .table-card .occupancy-badge {
+  background: rgba(42, 39, 20, 0.08);
+  border-color: rgba(42, 39, 20, 0.08);
+  color: var(--color-deep);
+}
+
+.admin-body .admin-record-card .button-secondary,
+.admin-body .admin-record-card .button-solid-light,
+.admin-body .table-card .button-secondary,
+.admin-body .table-card .button-solid-light,
+.admin-body .assignment-row .button-secondary,
+.admin-body .assignment-row .button-solid-light,
+.admin-body .gift-admin-card .button-secondary,
+.admin-body .gift-admin-card .button-solid-light {
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--color-deep);
+  border-color: rgba(42, 39, 20, 0.08);
+}
+
+.admin-body .assignment-select {
+  color: var(--color-deep);
+}
+
 .admin-body .empty-state-card {
   background: rgba(237, 235, 230, 0.95);
   color: var(--color-deep);
