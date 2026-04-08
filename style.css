@@ -100,9 +100,12 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
+  flex-wrap: nowrap;
 }
 
 .brand-mark {
+  display: inline-flex;
+  align-items: center;
   font-family: var(--font-display);
   font-size: 1.08rem;
   letter-spacing: 0.18em;
@@ -146,6 +149,7 @@ button {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  flex-wrap: nowrap;
 }
 
 .header-actions-public {
@@ -1697,13 +1701,14 @@ body.has-drawer-open {
   }
 
   .header-actions-public {
-    flex: 0 1 auto;
+    flex: 0 0 auto;
     justify-content: flex-end;
+    gap: 0.6rem;
   }
 
   .brand-mark {
-    font-size: 1rem;
-    letter-spacing: 0.14em;
+    font-size: 0.98rem;
+    letter-spacing: 0.08em;
   }
 
   .hero-section {
@@ -1744,14 +1749,10 @@ body.has-drawer-open {
     width: auto;
     min-width: auto;
     min-height: 3rem;
-    padding: 0.8rem 1rem;
-    font-size: 0.95rem;
+    padding: 0.78rem 0.95rem;
+    font-size: 0.92rem;
     white-space: nowrap;
-    flex: 0 1 auto;
-  }
-
-  .site-header .site-header-backlink {
-    display: none !important;
+    flex: 0 0 auto;
   }
 
   .editorial-grid,
