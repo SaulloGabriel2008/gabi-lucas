@@ -273,7 +273,29 @@
                 </div>
               </div>
               <p id="tableListSummary" class="admin-toolbar-summary"></p>
-              <div id="tableList" class="admin-simple-list"></div>
+              <div id="tableCarousel" class="admin-card-carousel">
+                <div class="admin-card-carousel-controls" aria-label="Navegação da lista de mesas">
+                  <button
+                    id="tableCarouselPrev"
+                    type="button"
+                    class="admin-card-carousel-button"
+                    aria-label="Ver mesas anteriores"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    id="tableCarouselNext"
+                    type="button"
+                    class="admin-card-carousel-button"
+                    aria-label="Ver próximas mesas"
+                  >
+                    ›
+                  </button>
+                </div>
+                <div id="tableListViewport" class="admin-card-carousel-viewport">
+                  <div id="tableList" class="admin-simple-list admin-card-carousel-track"></div>
+                </div>
+              </div>
             </div>
           </div>
 

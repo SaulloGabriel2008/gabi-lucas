@@ -128,6 +128,10 @@ const dom = {
   tableResetButton: $("#tableResetButton"),
   tableFormFeedback: $("#tableFormFeedback"),
   tableListSummary: $("#tableListSummary"),
+  tableCarousel: $("#tableCarousel"),
+  tableCarouselPrev: $("#tableCarouselPrev"),
+  tableCarouselNext: $("#tableCarouselNext"),
+  tableListViewport: $("#tableListViewport"),
   tableList: $("#tableList"),
   tableDistributionStats: $("#tableDistributionStats"),
   generateAssignmentsButton: $("#generateAssignmentsButton"),
@@ -1251,6 +1255,7 @@ function openNewTableEditor() {
   dom.tableName.value = "";
   dom.tableCapacity.value = "";
   dom.tableNotes.value = "";
+  setText(dom.tableResetButton, "Nova mesa");
   setFeedback(dom.tableFormFeedback, "", "");
 }
 
@@ -1265,6 +1270,7 @@ function openTableEditor(tableId) {
   dom.tableName.value = table.name || "";
   dom.tableCapacity.value = String(table.capacity || "");
   dom.tableNotes.value = table.notes || "";
+  setText(dom.tableResetButton, "Cancelar edição");
   setFeedback(dom.tableFormFeedback, "", "");
   setCurrentStep("tables");
 }
@@ -1317,6 +1323,70 @@ async function handleTableSave(event) {
   }
 }
 
+async function handleTableDeleteSimple(tableId, options = {}) {
+  const targetTableId = normalizeString(tableId);
+  const table = tableById(targetTableId);
+  const triggerButton = options.triggerButton || null;
+  const occupiedSeats = confirmedTableUsage().get(targetTableId) || 0;
+  const isEditingCurrentTable = normalizeString(dom.tableId.value) === targetTableId;
+
+  if (!requireActiveAdminSession(dom.tableFormFeedback)) {
+    return;
+  }
+
+  if (!table) {
+    setGlobalFeedback("error", "Essa mesa não foi encontrada.");
+    return;
+  }
+
+  const confirmed = window.confirm(
+    occupiedSeats
+      ? `Essa mesa tem ${occupiedSeats} confirmado(s). Excluir vai limpar essas alocações. Deseja continuar?`
+      : `Excluir a mesa "${table.name || "sem nome"}"?`
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  if (triggerButton) {
+    triggerButton.disabled = true;
+  }
+
+  dom.tableSubmitButton.disabled = true;
+  dom.tableResetButton.disabled = true;
+  setFeedback(dom.tableFormFeedback, "", "");
+  setGlobalFeedback("", "");
+
+  try {
+    await deleteTable(table.id);
+
+    if (isEditingCurrentTable) {
+      openNewTableEditor();
+      setFeedback(dom.tableFormFeedback, "success", "Mesa excluída com sucesso.");
+    }
+
+    setGlobalFeedback("success", `Mesa "${table.name || "sem nome"}" excluída.`);
+  } catch (error) {
+    console.error("Erro ao excluir mesa:", error);
+    logAdminEvent("error", "Falha ao excluir mesa.", {
+      code: error?.code || "",
+      errorMessage: error?.message || "",
+      tableId: table.id,
+      name: table.name || ""
+    });
+    const message = friendlyAdminErrorMessage(error, "Não foi possível excluir essa mesa agora.");
+    setGlobalFeedback("error", message);
+  } finally {
+    if (triggerButton) {
+      triggerButton.disabled = false;
+    }
+
+    dom.tableSubmitButton.disabled = false;
+    dom.tableResetButton.disabled = false;
+  }
+}
+
 function renderTableStats() {
   const rows = confirmedFamilyRows();
   const assignedFamilies = rows.filter((row) => row.currentTableId && !row.isSplit).length;
@@ -1346,49 +1416,52 @@ function renderTables() {
 
   if (!state.tables.length) {
     dom.tableList.appendChild(emptyState("Cadastre pelo menos uma mesa para come\u00E7ar a distribui\u00E7\u00E3o."));
+    refreshCardCarousels();
     return;
   }
 
   state.tables.forEach((table) => {
-    const card = createElement("article", "table-card");
+    const occupiedSeats = usage.get(table.id) || 0;
+    const capacity = Number(table.capacity || 0);
+    const card = createElement(
+      "article",
+      `table-card admin-record-card${occupiedSeats > capacity ? " is-over-capacity" : ""}`
+    );
     const header = createElement("div", "table-card-header");
-    header.append(
+    const titleWrap = createElement("div", "admin-info-stack");
+    titleWrap.append(
       createElement("h3", "panel-title", table.name || "Mesa sem nome"),
-      createElement("span", "occupancy-badge", `${usage.get(table.id) || 0}/${Number(table.capacity || 0)}`)
+      createElement("p", "section-body compact-body", table.notes || "Sem observações.")
+    );
+    header.append(
+      titleWrap,
+      createElement("span", "occupancy-badge", `${occupiedSeats}/${capacity}`)
     );
 
-    const notes = createElement("p", "section-body compact-body", table.notes || "Sem observa\u00E7\u00F5es.");
-    const actions = createElement("div", "inline-actions");
+    const stats = createStatGrid([
+      { label: "Capacidade", value: String(capacity) },
+      { label: "Confirmados", value: String(occupiedSeats) }
+    ]);
+
+    const actions = createElement("div", "table-card-actions");
     const editButton = createElement("button", "button button-secondary button-solid-light", "Editar");
     editButton.type = "button";
     editButton.addEventListener("click", () => openTableEditor(table.id));
 
-    const deleteButton = createElement("button", "button button-secondary button-solid-light", "Excluir");
+    const deleteButton = createElement("button", "button button-danger-soft", "Excluir");
     deleteButton.type = "button";
-    deleteButton.addEventListener("click", async () => {
-      const occupiedSeats = usage.get(table.id) || 0;
-      const confirmed = window.confirm(
-        occupiedSeats
-          ? `Essa mesa tem ${occupiedSeats} confirmado(s). Excluir vai limpar essas aloca\u00E7\u00F5es. Deseja continuar?`
-          : "Deseja excluir esta mesa?"
-      );
-
-      if (!confirmed) {
-        return;
-      }
-
-      try {
-        await deleteTable(table.id);
-        setGlobalFeedback("success", "Mesa exclu\u00EDda.");
-      } catch {
-        setGlobalFeedback("error", "N\u00E3o foi poss\u00EDvel excluir essa mesa agora.");
-      }
+    deleteButton.addEventListener("click", () => {
+      handleTableDeleteSimple(table.id, {
+        triggerButton: deleteButton
+      });
     });
 
     actions.append(editButton, deleteButton);
-    card.append(header, notes, actions);
+    card.append(header, stats, actions);
     dom.tableList.appendChild(card);
   });
+
+  refreshCardCarousels();
 }
 
 function automaticPlan() {
@@ -2149,6 +2222,13 @@ function initialize() {
     dom.confirmationsList,
     dom.confirmationsCarouselPrev,
     dom.confirmationsCarouselNext
+  );
+  registerCarousel(
+    dom.tableCarousel,
+    dom.tableListViewport,
+    dom.tableList,
+    dom.tableCarouselPrev,
+    dom.tableCarouselNext
   );
   registerCarousel(
     dom.giftCarousel,

@@ -556,10 +556,19 @@ body.has-drawer-open {
 
 .panel-map {
   min-height: 100%;
+  overflow: hidden;
+}
+
+.map-placeholder,
+.map-embed {
+  min-height: 20rem;
+  width: 100%;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .map-placeholder {
-  min-height: 20rem;
   display: grid;
   place-items: center;
   text-align: center;
@@ -576,6 +585,10 @@ body.has-drawer-open {
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent),
     rgba(255, 255, 255, 0.08);
+}
+
+.map-embed-light {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .form-grid,
@@ -1151,6 +1164,17 @@ body.has-drawer-open {
   padding: var(--space-lg);
 }
 
+.table-card-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: auto;
+}
+
+.table-card-actions .button {
+  width: 100%;
+}
+
 .table-card.is-over-capacity {
   border-color: rgba(140, 62, 43, 0.32);
   box-shadow: 0 18px 42px rgba(140, 62, 43, 0.14);
@@ -1523,6 +1547,12 @@ body.has-drawer-open {
   margin-left: auto;
 }
 
+#tableCarousel .admin-card-carousel-controls {
+  justify-content: center;
+  margin-right: auto;
+  margin-left: auto;
+}
+
 .admin-card-carousel-viewport {
   position: relative;
   overflow-x: auto;
@@ -1797,8 +1827,12 @@ body.has-drawer-open {
     width: min(72%, 14rem);
   }
 
-  .map-placeholder {
+  .map-placeholder,
+  .map-embed {
     min-height: 14rem;
+  }
+
+  .map-placeholder {
     padding: 1.2rem;
   }
 

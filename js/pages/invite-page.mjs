@@ -2,6 +2,7 @@
 import { fetchInviteBySlug, loadSiteSettings, submitInviteResponse } from "../firebase/client.mjs";
 import {
   applyMediaPresentation,
+  buildMapsEmbedUrl,
   createElement,
   formatGuestStatus,
   formatInviteStatus,
@@ -46,6 +47,7 @@ const dom = {
   inviteDateText: document.querySelector("#inviteDateText"),
   inviteVenueText: document.querySelector("#inviteVenueText"),
   inviteMapsLink: document.querySelector("#inviteMapsLink"),
+  inviteMapFrame: document.querySelector("#inviteMapFrame"),
   inviteCountdownShell: document.querySelector("#inviteCountdownShell"),
   inviteCountdownFallback: document.querySelector("#inviteCountdownFallback"),
   inviteDaysValue: document.querySelector("#inviteDaysValue"),
@@ -141,6 +143,10 @@ function hydrateSharedContent() {
   setText(dom.inviteVenueText, `${runtimeConfig.event.venueName} - ${runtimeConfig.event.address}`);
   dom.inviteMapsLink.href = runtimeConfig.event.mapsUrl;
   setText(dom.inviteMapsLink, runtimeConfig.event.mapsLabel);
+  dom.inviteMapFrame.src = buildMapsEmbedUrl(
+    runtimeConfig.event.mapsUrl,
+    [runtimeConfig.event.venueName, runtimeConfig.event.address].filter(Boolean).join(", ")
+  );
   dom.inviteDrawerMapsLink.href = runtimeConfig.event.mapsUrl;
   setText(dom.inviteDrawerMapsLink, runtimeConfig.event.mapsLabel);
 }

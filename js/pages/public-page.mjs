@@ -2,6 +2,7 @@
 import { loadPublicSiteData } from "../firebase/client.mjs";
 import {
   applyMediaPresentation,
+  buildMapsEmbedUrl,
   createElement,
   mergeDeep,
   setText,
@@ -54,6 +55,7 @@ const dom = {
   venueName: document.querySelector("#venueName"),
   venueAddress: document.querySelector("#venueAddress"),
   mapsLink: document.querySelector("#mapsLink"),
+  venueMapFrame: document.querySelector("#venueMapFrame"),
   countdownKicker: document.querySelector("#countdownKicker"),
   countdownTitle: document.querySelector("#countdownTitle"),
   countdownIntro: document.querySelector("#countdownIntro"),
@@ -243,6 +245,10 @@ function hydrateStaticContent(config) {
   setText(dom.venueAddress, config.event.address);
   setText(dom.mapsLink, config.event.mapsLabel);
   dom.mapsLink.href = config.event.mapsUrl;
+  dom.venueMapFrame.src = buildMapsEmbedUrl(
+    config.event.mapsUrl,
+    [config.event.venueName, config.event.address].filter(Boolean).join(", ")
+  );
 
   setText(dom.countdownKicker, config.publicSite.countdown.kicker);
   setText(dom.countdownTitle, config.publicSite.countdown.title);

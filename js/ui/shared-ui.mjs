@@ -104,6 +104,33 @@ export function setupSmoothScroll(root = document) {
   });
 }
 
+export function buildMapsEmbedUrl(mapsUrl, fallbackQuery = "") {
+  const normalizedUrl = String(mapsUrl || "").trim();
+  const fallback = String(fallbackQuery || "").trim();
+
+  try {
+    if (normalizedUrl) {
+      const parsed = new URL(normalizedUrl);
+      const query = parsed.searchParams.get("q")
+        || parsed.searchParams.get("query")
+        || parsed.searchParams.get("destination")
+        || fallback;
+
+      if (query) {
+        return `https://www.google.com/maps?q=${encodeURIComponent(query)}&z=15&output=embed`;
+      }
+    }
+  } catch {
+    // Fall back to the address/title query when the configured URL is not a valid absolute URL.
+  }
+
+  if (!fallback) {
+    return "";
+  }
+
+  return `https://www.google.com/maps?q=${encodeURIComponent(fallback)}&z=15&output=embed`;
+}
+
 export function setupMobileDrawer({
   shell,
   drawer,

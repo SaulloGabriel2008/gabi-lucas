@@ -127,9 +127,15 @@
           <a id="inviteMapsLink" class="button button-secondary button-light-outline" href="" target="_blank" rel="noreferrer">Abrir no Google Maps</a>
         </div>
         <div class="panel panel-map reveal">
-          <div class="map-placeholder map-placeholder-light">
-            <span>Consulte o endereço e o mapa para planejar sua chegada com tranquilidade.</span>
-          </div>
+          <iframe
+            id="inviteMapFrame"
+            class="map-embed map-embed-light"
+            src=""
+            title="Mapa do local do evento"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            allowfullscreen
+          ></iframe>
         </div>
       </div>
     </section>
