@@ -1139,7 +1139,7 @@ body.has-drawer-open {
 }
 
 .gift-admin-image {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 9;
 }
 
 .gift-admin-body {
@@ -1967,7 +1967,7 @@ body.has-drawer-open {
   }
 
   .gift-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .field-grid-2,
@@ -2220,7 +2220,7 @@ body.has-drawer-open {
 }
 
 .admin-record-card {
-  padding: var(--space-lg);
+  padding: var(--space-md);
 }
 
 .admin-link-editor {
@@ -2284,7 +2284,8 @@ body.has-drawer-open {
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
   color: #ebeae6;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
   transition: transform var(--transition-soft), background-color var(--transition-soft), box-shadow var(--transition-soft);
 }
 
@@ -2299,6 +2300,7 @@ body.has-drawer-open {
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #fff;
   border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
 }
 
 .admin-body input:focus,
@@ -2320,9 +2322,8 @@ body.has-drawer-open {
   box-shadow: 0 8px 24px rgba(73, 82, 61, 0.3);
 }
 
-.admin-body .section-kicker,
-.admin-body .section-kicker-light {
-  color: rgba(255, 255, 255, 0.5);
+.admin-body .site-header {
+  --header-height: 4.25rem;
 }
 
 .admin-guests-header {
@@ -2335,7 +2336,7 @@ body.has-drawer-open {
 .admin-guest-input-line {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
   animation: guestLineFadeIn 0.3s ease;
 }
 
@@ -2398,6 +2399,8 @@ body.has-drawer-open {
   background: rgba(255, 255, 255, 0.85);
   color: var(--color-deep);
   border-color: transparent;
+  min-height: 2.75rem;
+  padding: 0.6rem 1.25rem;
 }
 
 .admin-body .button-danger-soft {
