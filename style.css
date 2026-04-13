@@ -2530,6 +2530,7 @@ body.has-drawer-open {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .admin-body .gift-admin-image img {

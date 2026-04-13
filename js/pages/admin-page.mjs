@@ -1032,7 +1032,7 @@ function updateCarouselControls(config) {
     return;
   }
 
-  const cardCount = track.querySelectorAll(".family-card").length;
+  const cardCount = track.children.length;
   const maxScroll = Math.max(viewport.scrollWidth - viewport.clientWidth, 0);
   const hasOverflow = cardCount > 1 && maxScroll > CAROUSEL_SCROLL_TOLERANCE;
 
