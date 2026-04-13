@@ -2520,12 +2520,12 @@ body.has-drawer-open {
   flex-direction: column;
   overflow: hidden;
   border-radius: 1.6rem;
-  min-height: max-content !important;
+  height: auto !important;
 }
 
 .admin-body .gift-admin-image {
   width: 100%;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 4 / 3;
   background: #fff;
   display: flex;
   align-items: center;
@@ -2541,12 +2541,11 @@ body.has-drawer-open {
 }
 
 .admin-body .gift-admin-body {
-  padding: 1.5rem;
-  display: flex;
+  padding: 1.5rem !important;
+  display: flex !important;
   flex-direction: column;
   gap: 1rem;
-  flex-grow: 1;
-  flex-shrink: 0;
+  flex: 1 0 auto !important;
 }
 
 .admin-body .gift-admin-body .panel-subtitle {
