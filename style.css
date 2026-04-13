@@ -2520,6 +2520,7 @@ body.has-drawer-open {
   flex-direction: column;
   overflow: hidden;
   border-radius: 1.6rem;
+  min-height: max-content !important;
 }
 
 .admin-body .gift-admin-image {
@@ -2530,7 +2531,7 @@ body.has-drawer-open {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  flex-shrink: 0;
+  flex: 0 0 auto !important;
 }
 
 .admin-body .gift-admin-image img {
@@ -2545,6 +2546,7 @@ body.has-drawer-open {
   flex-direction: column;
   gap: 1rem;
   flex-grow: 1;
+  flex-shrink: 0;
 }
 
 .admin-body .gift-admin-body .panel-subtitle {
