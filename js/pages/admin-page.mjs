@@ -108,6 +108,8 @@ const dom = {
   familySubmitButton: $("#familySubmitButton"),
   familyDeleteButton: $("#familyDeleteButton"),
   familyResetButton: $("#familyResetButton"),
+  familyIndividualButton: $("#familyIndividualButton"),
+  adminIndividualGuestButton: $("#adminIndividualGuestButton"),
   familyFormFeedback: $("#familyFormFeedback"),
   familySavedActions: $("#familySavedActions"),
   familySavedLink: $("#familySavedLink"),
@@ -187,6 +189,7 @@ const state = {
   user: null,
   profile: null,
   familySlugEditorVisible: false,
+  isIndividualMode: false,
   lastSavedInviteUrl: "",
   subscriptionsStarted: false,
   unsubscribeFamilies: null,
@@ -660,6 +663,10 @@ function addGuestInputLine(initialValue = "") {
   wrapper.appendChild(input);
   wrapper.appendChild(removeBtn);
   dom.familyGuestsContainer.appendChild(wrapper);
+  
+  if (state.isIndividualMode && dom.familyGuestsContainer.children.length === 1) {
+    input.focus();
+  }
 }
 
 function syncFamilyFormMode() {
@@ -2289,6 +2296,8 @@ function initialize() {
     });
   });
   dom.familyResetButton.addEventListener("click", openNewFamilyEditor);
+  dom.familyIndividualButton.addEventListener("click", openIndividualGuestEditor);
+  dom.adminIndividualGuestButton.addEventListener("click", openIndividualGuestEditor);
   dom.familySearchInput.addEventListener("input", renderFamilies);
   dom.confirmationsSearchInput.addEventListener("input", renderConfirmations);
   dom.familyToggleSlugButton.addEventListener("click", () => {
