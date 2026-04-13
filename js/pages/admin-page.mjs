@@ -653,8 +653,19 @@ function addGuestInputLine(initialValue = "") {
   const wrapper = createElement("div", "admin-guest-input-line");
   const input = createElement("input", "");
   input.type = "text";
-  input.placeholder = "Ex.: Jo\u00E3o Silva";
+  input.placeholder = "Ex.: João Silva";
   input.value = initialValue;
+  
+  if (state.isIndividualMode && dom.familyGuestsContainer.children.length === 0) {
+    input.addEventListener("input", (e) => {
+      if (state.isIndividualMode) {
+        const val = e.target.value;
+        dom.familyName.value = val;
+        dom.displayName.value = val;
+        syncFamilyLinkPreview();
+      }
+    });
+  }
   
   const removeBtn = createElement("button", "button button-small button-light-outline", "Remover");
   removeBtn.type = "button";
@@ -807,10 +818,23 @@ function fillFamilyForm(family) {
 }
 
 function openNewFamilyEditor() {
+  state.isIndividualMode = false;
   fillFamilyForm(null);
   state.lastSavedInviteUrl = "";
   renderSavedFamilyActions();
   setCurrentStep("families");
+}
+
+function openIndividualGuestEditor() {
+  state.isIndividualMode = true;
+  fillFamilyForm(null);
+  state.lastSavedInviteUrl = "";
+  renderSavedFamilyActions();
+  setCurrentStep("families");
+  
+  // Set focus to the guest name input
+  const firstInput = dom.familyGuestsContainer.querySelector("input");
+  if (firstInput) firstInput.focus();
 }
 
 function openFamilyEditor(familyId) {
