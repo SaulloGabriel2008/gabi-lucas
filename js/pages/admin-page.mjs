@@ -1756,6 +1756,9 @@ function openGiftEditor(giftId) {
   syncGiftFormActions();
   setFeedback(dom.giftFormFeedback, "", "");
   setCurrentStep("advanced");
+  if (dom.giftForm) {
+    dom.giftForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 async function handleGiftDelete(giftId, options = {}) {
@@ -1819,11 +1822,13 @@ async function handleGiftDeleteSimple(giftId, options = {}) {
   const isEditingCurrentGift = normalizeString(dom.giftId.value) === targetGiftId;
 
   if (!requireActiveAdminSession(feedbackElement)) {
+    if (feedbackElement) feedbackElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
 
   if (!gift) {
     setFeedback(feedbackElement, "error", "Esse presente não foi encontrado.");
+    if (feedbackElement) feedbackElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
 
